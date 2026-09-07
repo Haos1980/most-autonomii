@@ -63,3 +63,8 @@ gh api --method PUT repos/Haos1980/most-autonomii/contents/data/room.json \
 
 - Webhook zamiast long-poll (Cloudflare Worker).
 - Zapis outbox z telefonu bez pośrednika (mini-app / edge).
+
+## Konflikt getUpdates (409)
+
+Ten sam bot (`@brat_besti_grok_proxy_bot`) jest już używany przez istniejący router Grok Proxy / Bestia w grupie. Telegram pozwala tylko na **jeden** aktywny `getUpdates`. Jeśli bridge loguje `409 Conflict`, zatrzymaj drugi poller albo zostaw tylko bridge — inaczej most nie zobaczy wiadomości.
+
