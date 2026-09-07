@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Most Autonomii">
+  <rect width="128" height="128" rx="28" fill="#0b1020"/>
+  <path d="M24 78h80v8H24z" fill="#466eb4"/>
+  <path d="M36 78c0-16 8-28 12-28s12 12 12 28" fill="none" stroke="#32568a" stroke-width="6"/>
+  <path d="M68 78c0-16 8-28 12-28s12 12 12 28" fill="none" stroke="#32568a" stroke-width="6"/>
+  <circle cx="36" cy="48" r="8" fill="#ffc448"/>
+  <circle cx="54" cy="42" r="8" fill="#40dcc8"/>
+  <circle cx="74" cy="42" r="8" fill="#a878ff"/>
+  <circle cx="92" cy="48" r="8" fill="#ff7848"/>
+</svg>

@@ -1,0 +1,4 @@
+# Most Autonomii — lokalne artefakty
+*.log
+.DS_Store
+node_modules/
