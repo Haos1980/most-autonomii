@@ -1,0 +1,11 @@
+{
+  "ok": false,
+  "botUsername": "brat_besti_grok_proxy_bot",
+  "botId": 8838251817,
+  "chatId": null,
+  "chatTitle": null,
+  "lastSyncAt": null,
+  "lastError": "Telegram getUpdates HTTP 409: {\"ok\":false,\"error_code\":409,\"description\":\"Conflict: terminated by other getUpdates request; make sure that only one bot instance is running\"}",
+  "updatedAt": "2026-09-07T20:45:41Z",
+  "running": true
+}
