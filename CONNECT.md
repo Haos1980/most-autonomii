@@ -11,11 +11,11 @@ Token bota: **tylko** `process.env.TELEGRAM_BOT_TOKEN` (lub `bridge/.env` lokaln
 
 ## Co Adam musi zrobić w Telegramie
 
-1. Dodać bota (**@brat_besti_grok_proxy_bot**) do grupy **Most autonomii** (najlepiej jako admin z odczytem wiadomości).
+1. Dodać bota (**@Brat_Bestii_Haos_bot**) do grupy **Most autonomii** (najlepiej jako admin z odczytem wiadomości).
 2. W BotFather: **/setprivacy → Disable**, żeby bot widział wszystkie wiadomości grupy (nie tylko komendy `/`).
 3. Napisać coś w grupie — bridge wykryje `chat_id` i zacznie sync do PWA.
 
-**Jedno zdanie dla HAOS → Adam:** Dodaj @brat_besti_grok_proxy_bot do grupy „Most autonomii” (admin) i w BotFather wyłącz privacy (`/setprivacy` → Disable), potem napisz cokolwiek w grupie.
+**Jedno zdanie dla HAOS → Adam:** Dodaj @Brat_Bestii_Haos_bot do grupy „Most autonomii” (admin) i w BotFather wyłącz privacy (`/setprivacy` → Disable), potem napisz cokolwiek w grupie.
 
 ## Uruchomienie bridge (HAOS / box)
 
@@ -66,5 +66,4 @@ gh api --method PUT repos/Haos1980/most-autonomii/contents/data/room.json \
 
 ## Konflikt getUpdates (409)
 
-Ten sam bot (`@brat_besti_grok_proxy_bot`) jest już używany przez istniejący router Grok Proxy / Bestia w grupie. Telegram pozwala tylko na **jeden** aktywny `getUpdates`. Jeśli bridge loguje `409 Conflict`, zatrzymaj drugi poller albo zostaw tylko bridge — inaczej most nie zobaczy wiadomości.
-
+Bridge używa **dedykowanego** bota `@Brat_Bestii_Haos_bot` (osobny token) — nie koliduje z `@brat_besti_grok_proxy_bot` / Grok Proxy. Telegram pozwala tylko na **jeden** aktywny `getUpdates` **na bota**. Jeśli ten bridge loguje `409 Conflict`, zabij drugi lokalny `bridge.py` (singleton lock + `bridge.pid`).
