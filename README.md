@@ -63,3 +63,15 @@ Szczegóły techniczne mostu: [CONNECT.md](./CONNECT.md)
 ## Licencja
 
 MIT — używaj swobodnie w ekosystemie HAOS / Adam.
+
+## Android APK (Capacitor)
+
+Debug APK: dist/Most-Autonomii-debug.apk (id pl.haos.mostautonomii).
+Instrukcja instalacji (nieznane zrodla): ANDROID.md.
+Offline: bundlowane lokalne www/. Poll data/room.json wlaczony domyslnie.
+
+## Telegram bridge (v2)
+
+Long-poll bot: `bridge/bridge.py` (requires `TELEGRAM_BOT_TOKEN`).  
+See [CONNECT.md](CONNECT.md) — Adam must add **@brat_besti_grok_proxy_bot** to group **Most autonomii** and disable BotFather privacy.
+
