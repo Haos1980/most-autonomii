@@ -1,5 +1,5 @@
 /* Most Autonomii — service worker (offline shell) */
-const CACHE = 'most-autonomii-v1';
+const CACHE = 'most-autonomii-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -9,7 +9,9 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
-  './data/room.json'
+  './data/room.json',
+  './data/bridge_status.json',
+  './data/outbox.json'
 ];
 
 self.addEventListener('install', (e) => {
@@ -29,7 +31,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   // Always try network for room.json (live-ish poll), fall back to cache
-  if (url.pathname.endsWith('/data/room.json')) {
+  if (url.pathname.endsWith('/data/room.json') || url.pathname.endsWith('/data/bridge_status.json') || url.pathname.endsWith('/data/outbox.json')) {
     e.respondWith(
       fetch(e.request)
         .then((res) => {
