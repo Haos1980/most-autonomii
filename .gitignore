@@ -1,4 +1,18 @@
+
+# Bridge secrets
 # Most Autonomii — lokalne artefakty
+*.iml
 *.log
 .DS_Store
+.gradle/
+.idea/
+android-sdk/
+android/
+bridge/*.log
+bridge/.env
+bridge/bridge.log
+bridge/state.json
+dist/*.apk
+local.properties
 node_modules/
+www/
