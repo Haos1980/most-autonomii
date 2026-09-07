@@ -8,6 +8,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import fcntl
 import re
 import subprocess
 import sys
@@ -30,6 +31,7 @@ GROUP_NAME_HINTS = ("most autonomii", "most autonomi")
 KNOWN_USERNAMES = {
     # telegram username (lower) -> party id
     "brat_besti_grok_proxy_bot": "proxy",
+    "brat_bestii_haos_bot": "proxy",
 }
 ROUTE_RE = re.compile(r"^(bestia|proxy|grok|haos)\b", re.I)
 POLL_TIMEOUT = 25
@@ -44,6 +46,7 @@ def log(msg: str) -> None:
 
 
 def load_dotenv() -> None:
+    """Load bridge/.env; file wins over ambient env so dedicated bot token is used."""
     env_file = BRIDGE_DIR / ".env"
     if not env_file.exists():
         return
@@ -54,7 +57,7 @@ def load_dotenv() -> None:
         k, v = line.split("=", 1)
         k = k.strip()
         v = v.strip().strip('"').strip("'")
-        if k and k not in os.environ:
+        if k:
             os.environ[k] = v
 
 
@@ -394,11 +397,39 @@ def process_outbox(state: dict) -> bool:
     return sent_any
 
 
+LOCK_PATH = BRIDGE_DIR / "bridge.lock"
+COMMANDS_PATH = BRIDGE_DIR / "commands.jsonl"
+
+
+def acquire_singleton():
+    """Ensure only one getUpdates poller runs on this box."""
+    LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fh = open(LOCK_PATH, "a+")
+    try:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        log("another bridge already holds bridge.lock — exit")
+        raise SystemExit(0)
+    fh.seek(0)
+    fh.truncate()
+    fh.write(str(os.getpid()) + "\n")
+    fh.flush()
+    return fh
+
+
+def append_command(route: str, text: str, meta: dict) -> None:
+    rec = {"ts": now_iso(), "route": route, "text": text, **meta}
+    with open(COMMANDS_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+
 def main() -> None:
     load_dotenv()
     _ = token()  # fail fast
+    lock_fh = acquire_singleton()
     state = load_state()
-    log("bridge starting…")
+    log("bridge starting (sole poller)…")
     me = api("getMe", timeout=30)
     if not me.get("ok"):
         log("getMe failed")
@@ -435,6 +466,8 @@ def main() -> None:
             room = load_room()
             room_changed = False
             if resp.get("ok"):
+                # Successful poll clears prior 409/transient errors
+                state["last_error"] = None
                 for upd in resp.get("result") or []:
                     uid_ = upd.get("update_id")
                     if uid_ is not None:
@@ -443,14 +476,14 @@ def main() -> None:
                         room_changed = True
                 if room_changed:
                     state["last_sync_at"] = now_iso()
-                    state["last_error"] = None
                     save_room(room)
                     save_state(state)
-                    write_status(state, {"running": True})
+                    write_status(state, {"running": True, "ok": True})
                     gh_put_file(ROOM_PATH, "bridge: sync Telegram → room.json")
                     gh_put_file(STATUS_PATH, "bridge: status sync")
                 else:
                     save_state(state)
+                    write_status(state, {"running": True, "ok": True})
             # outbox poll
             if time.time() - last_outbox >= OUTBOX_POLL_S:
                 last_outbox = time.time()
