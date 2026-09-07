@@ -1,4 +1,4 @@
-/* Most Autonomii — v1 client (localStorage + BroadcastChannel + optional room.json poll) */
+/* Most Autonomii — v2 client (localStorage + BroadcastChannel + live room.json / Telegram bridge) */
 (() => {
   'use strict';
 
@@ -12,7 +12,7 @@
   const DEFAULTS = {
     roomId: 'most-adam',
     tgLink: 'https://t.me/',
-    pollRoom: false,
+    pollRoom: true,
     presence: {
       adam: 'online',
       haos: 'away',
@@ -112,9 +112,9 @@
       {
         id: uid(),
         author: 'haos',
-        text: 'HAOS online (PWA v1). Live odpowiedzi agentów = następna fala (Telegram bot). Na razie czat lokalny + chipy komend.',
+        text: 'HAOS online (PWA v2). Most Telegram live: wiadomości z grupy trafiają tu przez bridge → room.json.',
         ts: now - 50000,
-        tag: 'manual / next wave',
+        tag: 'bridge',
       },
       {
         id: uid(),
@@ -126,7 +126,7 @@
     if (!state.tasks.length) {
       state.tasks = [
         { id: uid(), title: 'Podłącz deep link grupy Telegram „Most autonomii”', status: 'todo', assignee: 'adam', ts: now },
-        { id: uid(), title: 'Fala 2: bot Telegram → sync wiadomości do PWA', status: 'todo', assignee: 'haos', ts: now },
+        { id: uid(), title: 'Most Telegram live (bridge) — dodać bota do grupy', status: 'doing', assignee: 'adam', ts: now },
         { id: uid(), title: 'Przetestuj chipy bestia/proxy/grok/haos na telefonie', status: 'doing', assignee: 'adam', ts: now },
       ];
     }
@@ -155,6 +155,8 @@
     $('cfgTgLink').value = cfg.tgLink || '';
     $('cfgPollRoom').checked = !!cfg.pollRoom;
     $('cfgPresence').value = cfg.presence.adam || 'online';
+    updateBridgeStatusUI();
+    scheduleOutboxHint();
   }
 
   function renderPresence() {
@@ -235,29 +237,77 @@
   function sendMessage(text, author = 'adam', extra = {}) {
     const trimmed = String(text || '').trim();
     if (!trimmed) return;
+    const id = uid();
+    const ts = Date.now();
     state.messages.push({
-      id: uid(),
+      id,
       author,
       text: trimmed,
-      ts: Date.now(),
+      ts,
       ...extra,
     });
-    // Soft local stub: if command-like, add a "manual / next wave" note — not a fake live reply
+    // Chip / routed commands → outbox for Telegram bridge (no fake "manual / next wave")
     const m = trimmed.match(/^(bestia|proxy|grok|haos)\b/i);
     if (author === 'adam' && m) {
-      const target = m[1].toLowerCase();
-      const map = { bestia: 'bestia', proxy: 'proxy', grok: 'proxy', haos: 'haos' };
-      const aid = map[target] || 'haos';
-      state.messages.push({
-        id: uid(),
-        author: aid,
-        text: `Odebrano komendę „${trimmed}”. Live routing przez Telegram bota — następna fala. Na razie skopiuj do TG (📋 TG).`,
-        ts: Date.now() + 1,
-        tag: 'manual / next wave',
-      });
+      enqueueOutbox({ id, author, text: trimmed, ts, route: m[1].toLowerCase() });
+      toast('W kolejce do Telegrama (most)');
     }
     persist(true);
     renderMessages();
+  }
+
+  function enqueueOutbox(item) {
+    try {
+      const key = 'most-autonomii:outbox';
+      const raw = localStorage.getItem(key);
+      const list = raw ? JSON.parse(raw) : [];
+      list.push({ ...item, queuedAt: Date.now() });
+      localStorage.setItem(key, JSON.stringify(list));
+      // Best-effort: also expose downloadable / syncable payload in snapshot path
+      window.__pendingOutbox = list;
+      // Attempt to POST is impossible on Pages; bridge reads data/outbox.json from GH.
+      // Store intent; btnSendTg / auto sync helper merges into export.
+      scheduleOutboxHint();
+    } catch (_) {}
+  }
+
+  function scheduleOutboxHint() {
+    const el = $('outboxHint');
+    if (!el) return;
+    const n = (window.__pendingOutbox || []).length;
+    el.textContent = n
+      ? `${n} wiad. w lokalnej kolejce → użyj „Wyślij do TG” / sync mostu (bridge zbierze outbox z repo).`
+      : '';
+  }
+
+  async function flushOutboxToClipboardOrBridge() {
+    const key = 'most-autonomii:outbox';
+    let list = [];
+    try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch { list = []; }
+    const text = inputEl.value.trim() || (list.length ? list[list.length - 1].text : lastAdamCommand());
+    if (!text) { toast('Brak tekstu do wysłania'); return; }
+    // Always copy for manual paste fallback
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      inputEl.select();
+      document.execCommand('copy');
+    }
+    // Append to local outbox representation for snapshot / HAOS push
+    if (!list.some((x) => x.text === text && Date.now() - (x.ts || 0) < 5000)) {
+      const item = { id: uid(), author: 'adam', text, ts: Date.now() };
+      list.push(item);
+      localStorage.setItem(key, JSON.stringify(list));
+      window.__pendingOutbox = list;
+    }
+    // Build outbox.json payload Adam/HAOS can push — also keep in snapshot
+    const payload = {
+      pending: list.map((x) => ({ id: x.id, author: x.author || 'adam', text: x.text, ts: x.ts })),
+      updatedAt: new Date().toISOString(),
+    };
+    window.__outboxPayload = payload;
+    scheduleOutboxHint();
+    toast('Skopiowano + w kolejce mostu (bridge wyśle gdy outbox w repo)');
   }
 
   function bindUI() {
@@ -306,18 +356,14 @@
     inputEl.addEventListener('input', autoSize);
 
     $('btnCopyTg').addEventListener('click', async () => {
-      const text = inputEl.value.trim() || lastAdamCommand();
-      if (!text) { toast('Brak tekstu do skopiowania'); return; }
-      try {
-        await navigator.clipboard.writeText(text);
-        toast('Skopiowano do schowka — wklej w Telegramie');
-      } catch {
-        // fallback
-        inputEl.select();
-        document.execCommand('copy');
-        toast('Skopiowano (fallback)');
-      }
+      await flushOutboxToClipboardOrBridge();
     });
+    const btnSendTg = $('btnSendTg');
+    if (btnSendTg) {
+      btnSendTg.addEventListener('click', async () => {
+        await flushOutboxToClipboardOrBridge();
+      });
+    }
 
     // tasks
     $('taskForm').addEventListener('submit', (e) => {
@@ -420,7 +466,8 @@
         messages: state.messages,
         tasks: state.tasks,
         updatedAt: state.updatedAt,
-        v: 1,
+        outbox: window.__outboxPayload || { pending: window.__pendingOutbox || [], updatedAt: new Date().toISOString() },
+        v: 2,
       }, null, 2);
       $('syncModal').hidden = false;
     });
@@ -468,7 +515,9 @@
     inputEl.style.height = Math.min(120, inputEl.scrollHeight) + 'px';
   }
 
-  // --- poll room.json ---
+  // --- poll room.json + bridge status (default every 4s) ---
+  let lastBridgeSync = null;
+
   function restartPoll() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     if (!cfg.pollRoom) return;
@@ -477,7 +526,7 @@
         const res = await fetch('./data/room.json?t=' + Date.now(), { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
-        // Merge remote presence + optional remote messages tagged as remote
+        // Merge remote presence without wiping local adam
         if (data.presence) {
           cfg.presence = {
             ...cfg.presence,
@@ -485,28 +534,79 @@
             proxy: data.presence.proxy || cfg.presence.proxy,
             bestia: data.presence.bestia || cfg.presence.bestia,
           };
-          // keep adam local
           renderPresence();
+        }
+        if (data.bridge && data.bridge.lastSyncAt) {
+          lastBridgeSync = data.bridge.lastSyncAt;
+          updateBridgeStatusUI();
         }
         if (Array.isArray(data.messages) && data.messages.length) {
           let added = 0;
           const ids = new Set(state.messages.map((m) => m.id));
           for (const m of data.messages) {
             if (m.id && !ids.has(m.id)) {
-              state.messages.push({ ...m, tag: m.tag || 'z room.json / next wave' });
+              const merged = { ...m };
+              // Bridge / telegram messages: never tag as "manual / next wave"
+              if (merged.source === 'telegram' || merged.source === 'outbox' || (merged.tag && /telegram/i.test(merged.tag))) {
+                // keep bridge tag as-is
+              } else if (!merged.tag) {
+                merged.tag = 'z room.json';
+              }
+              if (merged.tag === 'manual / next wave' && (merged.source === 'telegram' || merged.source === 'outbox')) {
+                delete merged.tag;
+              }
+              state.messages.push(merged);
               added++;
             }
           }
           if (added) {
+            // stable sort by ts
+            state.messages.sort((a, b) => (a.ts || 0) - (b.ts || 0));
             persist(true);
             renderMessages();
-            toast(`Pobrano ${added} wiad. z room.json`);
+            toast(`Most: +${added} z Telegrama / room.json`);
           }
         }
       } catch (_) { /* offline ok */ }
+      // bridge status sidecar
+      try {
+        const br = await fetch('./data/bridge_status.json?t=' + Date.now(), { cache: 'no-store' });
+        if (br.ok) {
+          const st = await br.json();
+          if (st.lastSyncAt) lastBridgeSync = st.lastSyncAt;
+          window.__bridgeStatus = st;
+          updateBridgeStatusUI();
+        }
+      } catch (_) {}
     };
     tick();
-    pollTimer = setInterval(tick, 8000);
+    pollTimer = setInterval(tick, 4000);
+  }
+
+  function updateBridgeStatusUI() {
+    const el = $('bridgeStatusLine');
+    if (!el) return;
+    const st = window.__bridgeStatus || {};
+    const sync = lastBridgeSync || st.lastSyncAt;
+    let syncLabel = 'jeszcze nie';
+    if (sync) {
+      try {
+        syncLabel = new Date(sync).toLocaleString('pl-PL');
+      } catch { syncLabel = String(sync); }
+    }
+    const bot = st.botUsername ? '@' + st.botUsername : '—';
+    const chat = st.chatTitle || (st.chatId ? String(st.chatId) : 'niepodłączona');
+    const run = st.running ? 'działa' : 'offline';
+    el.textContent = `Bot ${bot} · most ${run} · grupa: ${chat} · ostatni sync: ${syncLabel}`;
+    const badge = $('bridgeLiveBadge');
+    if (badge) {
+      badge.className = 'badge ' + (st.running && st.chatId ? 'ok' : 'warn');
+      badge.textContent = st.running && st.chatId ? 'live bridge' : (st.running ? 'bridge: czekam na grupę' : 'bridge offline');
+    }
+    const cfgSt = $('cfgBridgeStatus');
+    if (cfgSt) {
+      cfgSt.textContent = 'Status mostu: ' + (el ? el.textContent : (syncLabel || '—'));
+    }
   }
 
   function registerSW() {
