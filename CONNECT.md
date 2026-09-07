@@ -1,54 +1,65 @@
 # CONNECT — most Telegram ↔ Most Autonomii
 
-## Stan v1 (teraz)
+## Stan v2 (live bridge)
 
-- PWA trzyma czat i zadania w **localStorage** (klucz pokoju, domyślnie `most-adam`).
-- **BroadcastChannel** synchronizuje karty w tej samej przeglądarce.
-- **Udostępnij snapshot** (przycisk ⇄) kopiuje JSON na inne urządzenie.
-- Opcjonalnie: włącz w ustawieniach poll **`data/room.json`** z GitHub Pages (tylko odczyt).
-- GitHub Pages **nie przyjmuje POST** z telefonu Adama — zapis z klienta do repo nie jest możliwy bez backendu / gh tokena.
+- PWA trzyma czat lokalnie (localStorage) i **co ~4 s** merge’uje `data/room.json` z GitHub Pages.
+- Bridge (`bridge/bridge.py`) long-polluje Telegram Bot API (`getUpdates`), mapuje grupę **Most autonomii**, dopisuje wiadomości do `data/room.json` i pushuje przez `gh api` contents.
+- Kierunek powrotny: PWA „Wyślij do TG” / chipy → schowek + kolejka; `data/outbox.json` → bridge `sendMessage` do grupy.
+- Status: `data/bridge_status.json` (bot, chat_id, last sync).
 
-Odpowiedzi HAOS / Proxy / Bestia w UI mają tag **`manual / next wave`**.
+Token bota: **tylko** `process.env.TELEGRAM_BOT_TOKEN` (lub `bridge/.env` lokalnie). Nigdy nie commitować tokena.
+
+## Co Adam musi zrobić w Telegramie
+
+1. Dodać bota (**@brat_besti_grok_proxy_bot**) do grupy **Most autonomii** (najlepiej jako admin z odczytem wiadomości).
+2. W BotFather: **/setprivacy → Disable**, żeby bot widział wszystkie wiadomości grupy (nie tylko komendy `/`).
+3. Napisać coś w grupie — bridge wykryje `chat_id` i zacznie sync do PWA.
+
+**Jedno zdanie dla HAOS → Adam:** Dodaj @brat_besti_grok_proxy_bot do grupy „Most autonomii” (admin) i w BotFather wyłącz privacy (`/setprivacy` → Disable), potem napisz cokolwiek w grupie.
+
+## Uruchomienie bridge (HAOS / box)
+
+```bash
+cd /workspace/most-autonomii
+# TELEGRAM_BOT_TOKEN must be in env (or bridge/.env)
+nohup python3 bridge/bridge.py >> bridge/bridge.log 2>&1 &
+```
+
+Logi: `bridge/bridge.log`. Stan: `bridge/state.json` (chat_id, offset).
+
+## Outbox (PWA → Telegram)
+
+Plik `data/outbox.json`:
+
+```json
+{
+  "pending": [
+    { "id": "m_…", "author": "adam", "text": "bestia status", "ts": 0 }
+  ],
+  "updatedAt": "…"
+}
+```
+
+Bridge wysyła `pending` do grupy i czyści kolejkę. Z telefonu Adama Pages nie przyjmuje POST — użyj schowka albo poproś HAOS o push outbox przez `gh api`.
 
 ## Deep link grupy
 
 1. W Telegramie otwórz grupę **Most autonomii**.
-2. Skopiuj link zaproszenia / deep link (`https://t.me/+…` lub `https://t.me/c/…`).
-3. W PWA: menu ☰ → pole **Deep link Telegram** → Zapisz.
-4. Zakładka **Most** → przycisk otworzy Telegram.
+2. Skopiuj link (`https://t.me/+…` lub `https://t.me/c/…`).
+3. PWA → ☰ → Deep link Telegram → Zapisz.
 
-## Fala 2 — bot Telegram
-
-Proponowany przepływ (bez płatnego backendu Cursor Origin):
-
-1. Bot (np. python-telegram-bot / grammY) w grupie „Most autonomii”.
-2. Komendy `bestia …`, `proxy …`, `grok …`, `haos …` routowane do właściwego agenta / kolejki.
-3. Sync do PWA — jedna z opcji:
-   - Bot aktualizuje **gist** lub plik `data/room.json` w repo przez GitHub API (HAOS / CI).
-   - PWA polluje co N sekund (już przygotowane UI).
-   - Później: Telegram WebApp / mini-app z `initData`.
-4. Odpowiedzi agentów pojawiają się w czacie PWA z prawdziwym autorem (bez tagu „manual”), gdy bot je dopisze do `room.json` / gista.
-
-### Aktualizacja `data/room.json` przez HAOS (przykład)
+## Aktualizacja plików przez gh api
 
 ```bash
-# lokalnie / agent
-CONTENT=$(base64 -w0 < data/room.json)   # na macOS: base64 -i …
+CONTENT=$(base64 -w0 < data/room.json)
 SHA=$(gh api repos/Haos1980/most-autonomii/contents/data/room.json --jq .sha)
 gh api --method PUT repos/Haos1980/most-autonomii/contents/data/room.json \
-  -f message='chore: sync room snapshot' \
+  -f message='chore: sync room' \
   -f content="$CONTENT" \
   -f sha="$SHA"
 ```
 
 ## Fala 3+
 
-- Webhook zamiast pollu (Cloudflare Worker / darmowy edge — do decyzji).
-- Presence live z Bestii (telefon).
-- APK / TWA opakowujące `https://haos1980.github.io/most-autonomii/`.
-
-## Czego nie robić w v1
-
-- Nie wymagać płatnego Firebase / Ably / PartyKit (opcjonalnie później, jeśli pojawią się klucze w env).
-- Nie udawać żywych odpowiedzi Bestii / Proxy bez mostu.
-- Nie prosić o dane bankowe ani sekrety w czacie PWA.
+- Webhook zamiast long-poll (Cloudflare Worker).
+- Zapis outbox z telefonu bez pośrednika (mini-app / edge).
