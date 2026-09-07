@@ -1,0 +1,13 @@
+{
+  "roomId": "most-adam",
+  "updatedAt": "2026-09-07T20:25:00Z",
+  "note": "HAOS może później aktualizować ten plik przez gh api. Klient tylko odczytuje (poll).",
+  "presence": {
+    "adam": "online",
+    "haos": "away",
+    "proxy": "away",
+    "bestia": "away"
+  },
+  "messages": [],
+  "tasks": []
+}
