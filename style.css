@@ -273,3 +273,6 @@ main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 @media (min-width: 700px) {
   .board { display: grid; grid-template-columns: repeat(3, 1fr); align-items: start; }
 }
+
+.badge.ok { background: #14532d; color: #bbf7d0; }
+
