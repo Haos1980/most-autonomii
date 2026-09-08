@@ -11,7 +11,7 @@
 
   const DEFAULTS = {
     roomId: 'most-adam',
-    tgLink: 'https://t.me/',
+    tgLink: 'https://t.me/', // ustaw deep link grupy „Most autonomii”
     pollRoom: true,
     presence: {
       adam: 'online',
@@ -251,7 +251,9 @@
     const m = trimmed.match(/^(bestia|proxy|grok|haos)\b/i);
     if (author === 'adam' && m) {
       enqueueOutbox({ id, author, text: trimmed, ts, route: m[1].toLowerCase() });
-      if (openTelegramWithText(trimmed)) {
+      if (!hasTgDeepLink()) {
+        toast('ustaw deep link grupy');
+      } else if (openTelegramWithText(trimmed)) {
         toast('Otwieram Telegram + kolejka mostu');
       } else {
         toast('W kolejce do Telegrama (most)');
@@ -525,11 +527,21 @@
   }
 
 
-  /** Prefer live GitHub Pages (APK/Capacitor bundles frozen www/); relative only as fallback. */
+  /** Prefer live GitHub Pages. Skip relative fallback on Capacitor / github.io host. */
+  function preferLiveOnly() {
+    try {
+      if (typeof window !== 'undefined' && window.Capacitor) return true;
+      const h = (location && location.hostname) || '';
+      if (h.includes('github.io')) return true;
+    } catch (_) {}
+    return false;
+  }
+
   async function fetchLiveJson(relPath) {
     const bust = '?t=' + Date.now();
     const path = relPath.startsWith('/') ? relPath : '/' + relPath;
-    const urls = [LIVE_BASE + path + bust, '.' + path + bust];
+    const urls = [LIVE_BASE + path + bust];
+    if (!preferLiveOnly()) urls.push('.' + path + bust);
     for (const url of urls) {
       try {
         const res = await fetch(url, { cache: 'no-store' });
@@ -539,11 +551,19 @@
     return null;
   }
 
+  function hasTgDeepLink() {
+    const link = (cfg.tgLink || '').trim();
+    return !!(link && link !== 'https://t.me/' && link !== 'https://t.me');
+  }
+
   function openTelegramWithText(text) {
     const trimmed = String(text || '').trim();
     if (!trimmed) return false;
+    if (!hasTgDeepLink()) {
+      toast('ustaw deep link grupy');
+      return false;
+    }
     const link = (cfg.tgLink || '').trim();
-    if (!link || link === 'https://t.me/') return false;
     const encoded = encodeURIComponent(trimmed);
     // Share sheet with deep-link / invite URL + message text (works in Capacitor via external browser/TG)
     const url = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encoded;
@@ -628,8 +648,6 @@
   }
 
   function updateBridgeStatusUI() {
-    const el = $('bridgeStatusLine');
-    if (!el) return;
     const st = window.__bridgeStatus || {};
     const sync = lastBridgeSync || st.lastSyncAt;
     let syncLabel = 'jeszcze nie';
@@ -641,15 +659,32 @@
     const bot = st.botUsername ? '@' + st.botUsername : '—';
     const chat = st.chatTitle || (st.chatId ? String(st.chatId) : 'niepodłączona');
     const run = st.running ? 'działa' : 'offline';
-    el.textContent = `Bot ${bot} · most ${run} · grupa: ${chat} · ostatni sync: ${syncLabel}`;
+    const err = st.lastError ? String(st.lastError) : null;
+    const line = err
+      ? `Bot ${bot} · ERROR: ${err} · lastSync: ${syncLabel}`
+      : `Bot ${bot} · most ${run} · grupa: ${chat} · lastSync: ${syncLabel}`;
+
+    const el = $('bridgeStatusLine');
+    if (el) el.textContent = line;
+
+    const banner = $('bridgeBanner');
+    const bannerText = $('bridgeBannerText');
+    if (banner && bannerText) {
+      banner.hidden = false;
+      banner.dataset.state = err ? 'err' : (st.running && st.chatId ? 'ok' : 'warn');
+      bannerText.textContent = err
+        ? `${bot} · lastSync ${syncLabel} · ${err}`
+        : `${bot} · lastSync ${syncLabel} · ${run} · ${chat}`;
+    }
+
     const badge = $('bridgeLiveBadge');
     if (badge) {
-      badge.className = 'badge ' + (st.running && st.chatId ? 'ok' : 'warn');
-      badge.textContent = st.running && st.chatId ? 'live bridge' : (st.running ? 'bridge: czekam na grupę' : 'bridge offline');
+      badge.className = 'badge ' + (err ? 'err' : (st.running && st.chatId ? 'ok' : 'warn'));
+      badge.textContent = err ? 'bridge error' : (st.running && st.chatId ? 'live bridge' : (st.running ? 'bridge: czekam na grupę' : 'bridge offline'));
     }
     const cfgSt = $('cfgBridgeStatus');
     if (cfgSt) {
-      cfgSt.textContent = 'Status mostu: ' + (el ? el.textContent : (syncLabel || '—'));
+      cfgSt.textContent = 'Status mostu: ' + line;
     }
   }
 
