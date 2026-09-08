@@ -15,7 +15,8 @@
       "text": "Haos cześć",
       "ts": 1788886093000,
       "source": "telegram",
-      "tag": "telegram→routed"
+      "tag": "telegram→routed",
+      "at": "2026-09-08T16:48:13Z"
     },
     {
       "id": "tg_-1004364186396_252",
@@ -23,7 +24,8 @@
       "text": "bestia Sprawdź na telefonie Adama aplikację/APK Most Autonomii (pl.haos.mostautonomii). Nie działa. Zrób od A do Z: 1) czy APK jest zainstalowane, 2) odpal i zobacz co się dzieje (crash / biały ekran / błąd sieci), 3) zrób screeny, 4) sprawdź czy otwiera https://haos1980.github.io/most-autonomii/ w Chrome jako porównanie, 5) napisz w grupie co dokładnie nie działa i co widać. Pełna autonomia na telefonie.",
       "ts": 1788887886000,
       "source": "telegram",
-      "tag": "telegram→routed"
+      "tag": "telegram→routed",
+      "at": "2026-09-08T17:18:06Z"
     }
   ],
   "tasks": [],
