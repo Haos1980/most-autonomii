@@ -21,6 +21,7 @@
     },
   };
 
+  const LIVE_BASE = 'https://haos1980.github.io/most-autonomii';
   const storeKey = (room) => `most-autonomii:${room}`;
   const cfgKey = 'most-autonomii:cfg';
 
@@ -250,7 +251,11 @@
     const m = trimmed.match(/^(bestia|proxy|grok|haos)\b/i);
     if (author === 'adam' && m) {
       enqueueOutbox({ id, author, text: trimmed, ts, route: m[1].toLowerCase() });
-      toast('W kolejce do Telegrama (most)');
+      if (openTelegramWithText(trimmed)) {
+        toast('Otwieram Telegram + kolejka mostu');
+      } else {
+        toast('W kolejce do Telegrama (most)');
+      }
     }
     persist(true);
     renderMessages();
@@ -307,7 +312,11 @@
     };
     window.__outboxPayload = payload;
     scheduleOutboxHint();
-    toast('Skopiowano + w kolejce mostu (bridge wyśle gdy outbox w repo)');
+    if (openTelegramWithText(text)) {
+      toast('Skopiowano + otwarto Telegram (share)');
+    } else {
+      toast('Skopiowano + w kolejce mostu (bridge wyśle gdy outbox w repo)');
+    }
   }
 
   function bindUI() {
@@ -515,6 +524,38 @@
     inputEl.style.height = Math.min(120, inputEl.scrollHeight) + 'px';
   }
 
+
+  /** Prefer live GitHub Pages (APK/Capacitor bundles frozen www/); relative only as fallback. */
+  async function fetchLiveJson(relPath) {
+    const bust = '?t=' + Date.now();
+    const path = relPath.startsWith('/') ? relPath : '/' + relPath;
+    const urls = [LIVE_BASE + path + bust, '.' + path + bust];
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) return await res.json();
+      } catch (_) { /* try next */ }
+    }
+    return null;
+  }
+
+  function openTelegramWithText(text) {
+    const trimmed = String(text || '').trim();
+    if (!trimmed) return false;
+    const link = (cfg.tgLink || '').trim();
+    if (!link || link === 'https://t.me/') return false;
+    const encoded = encodeURIComponent(trimmed);
+    // Share sheet with deep-link / invite URL + message text (works in Capacitor via external browser/TG)
+    const url = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encoded;
+    try {
+      const w = window.open(url, '_blank');
+      if (!w) window.location.href = url;
+    } catch (_) {
+      try { window.location.href = url; } catch (__) {}
+    }
+    return true;
+  }
+
   // --- poll room.json + bridge status (default every 4s) ---
   let lastBridgeSync = null;
 
@@ -523,9 +564,8 @@
     if (!cfg.pollRoom) return;
     const tick = async () => {
       try {
-        const res = await fetch('./data/room.json?t=' + Date.now(), { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
+        const data = await fetchLiveJson('/data/room.json');
+        if (!data) return;
         // Merge remote presence without wiping local adam
         if (data.presence) {
           cfg.presence = {
@@ -546,6 +586,11 @@
           for (const m of data.messages) {
             if (m.id && !ids.has(m.id)) {
               const merged = { ...m };
+              // Normalize ts from bridge `at` (ISO) when ts missing
+              if (merged.ts == null && merged.at) {
+                const parsed = Date.parse(merged.at);
+                if (!Number.isNaN(parsed)) merged.ts = parsed;
+              }
               // Bridge / telegram messages: never tag as "manual / next wave"
               if (merged.source === 'telegram' || merged.source === 'outbox' || (merged.tag && /telegram/i.test(merged.tag))) {
                 // keep bridge tag as-is
@@ -568,11 +613,10 @@
           }
         }
       } catch (_) { /* offline ok */ }
-      // bridge status sidecar
+      // bridge status sidecar (live Pages first)
       try {
-        const br = await fetch('./data/bridge_status.json?t=' + Date.now(), { cache: 'no-store' });
-        if (br.ok) {
-          const st = await br.json();
+        const st = await fetchLiveJson('/data/bridge_status.json');
+        if (st) {
           if (st.lastSyncAt) lastBridgeSync = st.lastSyncAt;
           window.__bridgeStatus = st;
           updateBridgeStatusUI();
