@@ -13,7 +13,9 @@ Token bota: **tylko** `process.env.TELEGRAM_BOT_TOKEN` (lub `bridge/.env` lokaln
 
 1. Dodać bota (**@Brat_Bestii_Haos_bot**) do grupy **Most autonomii** (najlepiej jako admin z odczytem wiadomości).
 2. W BotFather: **/setprivacy → Disable**, żeby bot widział wszystkie wiadomości grupy (nie tylko komendy `/`).
+   - Jeśli privacy nadal **ON**, bot **nie zobaczy** zwykłego `haos …` — tylko `/haos` albo wzmiankę `@Brat_Bestii_Haos_bot …`.
 3. Napisać coś w grupie — bridge wykryje `chat_id` i zacznie sync do PWA.
+4. Odpowiedź HAOS w grupie: teksty zaczynające się od `haos` / `/haos` / `@Brat_Bestii_Haos_bot` (bez względu na wielkość liter).
 
 **Jedno zdanie dla HAOS → Adam:** Dodaj @Brat_Bestii_Haos_bot do grupy „Most autonomii” (admin) i w BotFather wyłącz privacy (`/setprivacy` → Disable), potem napisz cokolwiek w grupie.
 
