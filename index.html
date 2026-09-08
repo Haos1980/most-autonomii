@@ -8,11 +8,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Most Autonomii" />
   <meta name="description" content="Wspólny hub Adama, HAOS, Grok Proxy i Bestii — czat, zadania, most do Telegrama." />
-  <link rel="manifest" href="manifest.json?v=1.0.2" />
+  <link rel="manifest" href="manifest.json?v=1.0.3" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>Most Autonomii</title>
-  <link rel="stylesheet" href="style.css?v=1.0.2" />
+  <link rel="stylesheet" href="style.css?v=1.0.3" />
 </head>
 <body>
   <div id="app">
@@ -34,6 +34,11 @@
     <section class="presence" id="presence" aria-label="Obecność stron">
       <!-- filled by JS -->
     </section>
+
+    <div class="bridge-banner" id="bridgeBanner" data-state="warn" role="status" aria-live="polite">
+      <span class="bridge-banner-label">Most</span>
+      <span id="bridgeBannerText">Ładowanie statusu mostu…</span>
+    </div>
 
     <nav class="tabs" role="tablist">
       <button type="button" class="tab active" data-tab="chat" role="tab" aria-selected="true">Czat</button>
@@ -100,8 +105,8 @@
         <article class="card">
           <h2>Most do Telegrama</h2>
           <p>Grupa docelowa: <strong>Most autonomii</strong>. Bridge long-polluje Bota API, dopisuje wiadomości do <code>data/room.json</code> i pushuje na GitHub Pages — PWA odświeża czat co ~4 s.</p>
-          <a class="btn primary block" id="tgDeepLink" href="https://t.me/" target="_blank" rel="noopener">Otwórz Telegram (placeholder)</a>
-          <p class="hint">Ustaw deep link grupy w ustawieniach (menu ☰). Dodaj bota do grupy jako admina i wyłącz privacy w BotFather.</p>
+          <a class="btn primary block" id="tgDeepLink" href="https://t.me/" target="_blank" rel="noopener">Otwórz Telegram — Most autonomii</a>
+          <p class="hint">Domyślnie: grupa <strong>Most autonomii</strong>. Ustaw deep link w ☰ (bez linku: toast „ustaw deep link grupy”). Dodaj bota jako admina i wyłącz privacy w BotFather.</p>
         </article>
         <article class="card">
           <h2>Jak działa synchronizacja v2</h2>
@@ -135,7 +140,7 @@
           <input type="text" id="cfgRoomId" value="most-adam" />
         </label>
         <label>Deep link Telegram
-          <input type="url" id="cfgTgLink" placeholder="https://t.me/c/…" />
+          <input type="url" id="cfgTgLink" placeholder="Most autonomii — https://t.me/+…" />
         </label>
         <label class="check">
           <input type="checkbox" id="cfgPollRoom" checked />
@@ -153,7 +158,7 @@
           <button type="button" class="btn primary" id="btnSaveCfg">Zapisz</button>
           <button type="button" class="btn ghost danger" id="btnClearAll">Wyczyść dane lokalne</button>
         </div>
-        <p class="hint">Wersja PWA v2 · most Telegram live · Haos1980/most-autonomii</p>
+        <p class="hint">Wersja PWA v1.0.3 · most Telegram live · Haos1980/most-autonomii</p>
       </div>
     </aside>
 
@@ -175,6 +180,6 @@
 
     <div class="toast" id="toast" hidden></div>
   </div>
-  <script src="app.js?v=1.0.2" defer></script>
+  <script src="app.js?v=1.0.3" defer></script>
 </body>
 </html>
