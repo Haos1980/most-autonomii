@@ -280,16 +280,58 @@ def append_message(room: dict, msg: dict, author: str, tag: str | None) -> bool:
         "author": author,
         "text": text,
         "ts": ts,
+        "at": now_iso(),
         "source": "telegram",
     }
     if tag:
         entry["tag"] = tag
+    if not entry.get("at"):
+        entry["at"] = now_iso()
     room.setdefault("messages", []).append(entry)
     # keep last 500
     if len(room["messages"]) > 500:
         room["messages"] = room["messages"][-500:]
     presence_bump(room, author)
     return True
+
+
+
+HAOS_MENTION_RE = re.compile(
+    r"^(?:haos\b|/haos(?:@[A-Za-z0-9_]+)?\b|@Brat_Bestii_Haos_bot\b)",
+    re.I,
+)
+
+
+def maybe_reply_haos(msg: dict, state: dict) -> None:
+    """If inbound text starts with haos / /haos / @Brat_Bestii_Haos_bot, send a short Telegram ack."""
+    if not state.get("chat_id"):
+        return
+    text = (msg.get("text") or msg.get("caption") or "").strip()
+    if not text:
+        return
+    m = HAOS_MENTION_RE.match(text)
+    if not m:
+        return
+    rest = text[m.end():].lstrip(" :,-—").strip()
+    ack = f"HAOS: ok — {rest}" if rest else "HAOS: ok — słyszę."
+    # keep acks short
+    if len(ack) > 400:
+        ack = ack[:397] + "..."
+    try:
+        params = {
+            "chat_id": str(state["chat_id"]),
+            "text": ack,
+            "disable_web_page_preview": "true",
+        }
+        if msg.get("message_id") is not None:
+            params["reply_to_message_id"] = str(msg["message_id"])
+        resp = api("sendMessage", params, timeout=30)
+        if resp.get("ok"):
+            log(f"haos ack sent for msg_id={msg.get('message_id')}")
+        else:
+            log(f"haos ack not ok: {str(resp)[:200]}")
+    except Exception as e:
+        log(f"haos ack err: {e}")
 
 
 def process_update(upd: dict, state: dict, room: dict) -> bool:
@@ -322,6 +364,8 @@ def process_update(upd: dict, state: dict, room: dict) -> bool:
     if append_message(room, msg, author, tag):
         log(f"msg from={author} tag={tag} id={msg.get('message_id')}")
         changed = True
+    # Reply on haos / @Brat_Bestii_Haos_bot triggers (inbound to bound chat)
+    maybe_reply_haos(msg, state)
     return changed
 
 
@@ -364,12 +408,14 @@ def process_outbox(state: dict) -> bool:
                 mid = item.get("id") or uid("pwa")
                 ids = {m.get("id") for m in room.get("messages") or []}
                 if mid not in ids:
+                    at_iso = item.get("at") or now_iso()
                     room.setdefault("messages", []).append(
                         {
                             "id": mid,
                             "author": item.get("author") or "adam",
                             "text": text,
                             "ts": item.get("ts") or int(time.time() * 1000),
+                            "at": at_iso,
                             "tag": "pwa→telegram",
                             "source": "outbox",
                         }
@@ -461,7 +507,7 @@ def main() -> None:
             resp = api(
                 "getUpdates",
                 {"offset": offset, "timeout": POLL_TIMEOUT, "allowed_updates": json.dumps(["message", "edited_message"])},
-                timeout=POLL_TIMEOUT + 10,
+                timeout=POLL_TIMEOUT + 40,
             )
             room = load_room()
             room_changed = False
@@ -489,6 +535,12 @@ def main() -> None:
                 last_outbox = time.time()
                 process_outbox(state)
                 write_status(state, {"running": True})
+        except TimeoutError:
+            # Long-poll idle end can race urllib timeout; soft retry, no traceback spam
+            log("getUpdates soft timeout — retry")
+            state["last_error"] = None
+            write_status(state, {"running": True, "ok": True})
+            continue
         except Exception as e:
             err = str(e)
             state["last_error"] = err[:300]
