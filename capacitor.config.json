@@ -1,0 +1,14 @@
+{
+  "appId": "pl.haos.mostautonomii",
+  "appName": "Most Autonomii",
+  "webDir": "www",
+  "server": {
+    "url": "https://haos1980.github.io/most-autonomii/",
+    "cleartext": false,
+    "androidScheme": "https",
+    "allowNavigation": ["haos1980.github.io", "*.github.io", "t.me", "telegram.org"]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
