@@ -1,55 +1,41 @@
-# CONNECT — pokój w aplikacji + opcjonalny mirror Telegram
+# CONNECT — pokój w aplikacji (Adam ≈ 0 konfiguracji)
 
-## Stan v1.1 (in-app room)
+## Stan v1.1
 
-- **APK/PWA = grupowy czat w aplikacji** (Adam + HAOS + Bestia + Proxy). Wszyscy widzą te same wiadomości.
-- Wysyłanie (**Wyślij**) zostaje w pokoju — **nie** otwiera Telegrama ani share sheet.
-- Wspólny stan: `data/room.json` na GitHub Pages. PWA **co ~4 s** merge’uje nowe wiadomości.
-- Z telefonu: ustaw w **☰ Ustawienia** fine-grained **GitHub PAT** (Contents: Read and write na `Haos1980/most-autonomii`) — wtedy Wyślij publikuje do `data/room.json` przez Contents API. Token tylko w localStorage.
-- Bez tokenu: wiadomość lokalna + toast „Lokalnie — ustaw GitHub token…”.
-- Bridge (`bridge/bridge.py`) **obserwuje room.json** i na nowe wiadomości Adama z wzmianką `haos` / `/haos` / `@…` dopisuje odpowiedź HAOS **w pokoju** (bez wymogu Telegrama).
-- Telegram = **opcjonalny mirror** (zakładka Most → „Wyślij do TG” / deep link). Bridge nadal może long-pollować grupę **Most autonomii** → room.json.
+- **APK/PWA = grupowy czat w aplikacji** (Adam + HAOS + Bestia + Proxy).
+- **Wyślij** zostaje w pokoju — **nigdy** nie otwiera Telegrama / share sheet.
+- **Adam nic nie wkleja** (żadnego PAT). Uprawnienia ustawia HAOS przy buildzie APK.
+- APK ma niewidoczny transport (`www/native-config.json`, **nie** w publicznym Pages JS):
+  - Bot API `sendMessage` → grupa (mirror),
+  - Contents API → `data/room.json` (HAOS token z builda).
+- PWA na Pages bez native-config: wiadomości lokalne + poll room.json (odczyt).
+- Bridge: room-watcher odpowiada na `haos` / `/haos` **w pokoju**; TG inbound = opcjonalny mirror.
 
-Token bota: **tylko** `process.env.TELEGRAM_BOT_TOKEN` (lub `bridge/.env` lokalnie). Nigdy nie commitować tokena ani PAT Adama.
-
-## GitHub PAT na telefonie (Adam)
-
-1. GitHub → Settings → Developer settings → Fine-grained personal access tokens.
-2. Repo: `Haos1980/most-autonomii`, permission **Contents: Read and write**.
-3. W aplikacji Most Autonomii → ☰ → pole **GitHub token** → Zapisz.
-4. Wyślij wiadomość — toast „Wysłano do pokoju (sync GitHub)”.
-
-## Co Adam może zrobić w Telegramie (opcjonalnie)
-
-1. Dodać bota (**@Brat_Bestii_Haos_bot**) do grupy **Most autonomii** (admin + odczyt).
-2. BotFather: **/setprivacy → Disable**.
-3. Wiadomości z grupy trafią do pokoju przez bridge; odpowiedzi HAOS z TG też są mirrorowane do room.json.
-
-## Uruchomienie bridge (HAOS / box)
+## Build APK (HAOS)
 
 ```bash
 cd /workspace/projekty-most/most-autonomii
-# TELEGRAM_BOT_TOKEN w env lub bridge/.env (opcjonalnie dla mirror TG)
+node scripts/sync-www.js          # kopiuje web + inject-native-config.js
+npx cap copy android
+cd android && ./gradlew assembleDebug
+# APK → _dostawy/apk/Most-Autonomii-v1.1.0.apk
+```
+
+`bridge/.env` (TELEGRAM_BOT_TOKEN) + `bridge/state.json` (chat_id) + `gh auth` → tylko lokalny `www/native-config.json` (gitignore).
+
+## Telegram (opcjonalny mirror)
+
+Bot w grupie **Most autonomii**, privacy OFF — inbound → room.json. Nie jest wymagany do rozmowy w APK.
+
+## Bridge
+
+```bash
+cd /workspace/projekty-most/most-autonomii
 nohup python3 bridge/bridge.py >> bridge/bridge.log 2>&1 &
 ```
 
-Logi: `bridge/bridge.log`. Stan: `bridge/state.json` (`chat_id`, `offset`, `room_seen_ids`).
+Stan: `bridge/state.json` (`room_seen_ids`, `chat_id`).
 
-## Outbox (opcjonalnie: pokój → Telegram)
+## Zaawansowany fallback (PWA)
 
-Plik `data/outbox.json` — bridge wysyła `pending` do grupy. Z zakładki Most: „Wyślij do TG”.
-
-## Aktualizacja plików przez gh api
-
-```bash
-CONTENT=$(base64 -w0 < data/room.json)
-SHA=$(gh api repos/Haos1980/most-autonomii/contents/data/room.json --jq .sha)
-gh api --method PUT repos/Haos1980/most-autonomii/contents/data/room.json \
-  -f message='chore: sync room' \
-  -f content="$CONTENT" \
-  -f sha="$SHA"
-```
-
-## Konflikt getUpdates (409)
-
-Jeden aktywny `getUpdates` na bota. Bridge: singleton lock `bridge.lock`.
+☰ → „Zaawansowane: ręczny sync” — opcjonalny PAT Contents write. **Nie** jest domyślną ścieżką.
