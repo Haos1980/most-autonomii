@@ -1,6 +1,6 @@
 {
   "roomId": "most-adam",
-  "updatedAt": "2026-09-10T19:00:52Z",
+  "updatedAt": "2026-09-10T19:01:09Z",
   "note": "Synced by Telegram bridge (HAOS). PWA polls this file.",
   "presence": {
     "adam": "online",
@@ -206,11 +206,20 @@
       "at": "2026-09-10T19:00:52Z",
       "source": "telegram",
       "tag": "telegram"
+    },
+    {
+      "id": "tg_-1004364186396_289",
+      "author": "haos",
+      "text": "HAOS: ok — Popraw błąd w APK most autonomii dalej wiadomości wyświetlają się w Telegram",
+      "ts": 1789066869222,
+      "at": "2026-09-10T19:01:09Z",
+      "source": "bridge",
+      "tag": "haos-ack"
     }
   ],
   "tasks": [],
   "bridge": {
-    "lastSyncAt": "2026-09-10T19:00:52Z",
+    "lastSyncAt": "2026-09-10T19:01:09Z",
     "source": "telegram"
   }
 }
