@@ -3,10 +3,15 @@
   "appName": "Most Autonomii",
   "webDir": "www",
   "server": {
-    "url": "https://haos1980.github.io/most-autonomii/",
     "cleartext": false,
     "androidScheme": "https",
-    "allowNavigation": ["haos1980.github.io", "*.github.io", "t.me", "telegram.org"]
+    "allowNavigation": [
+      "haos1980.github.io",
+      "*.github.io",
+      "api.telegram.org",
+      "api.github.com",
+      "github.com"
+    ]
   },
   "android": {
     "allowMixedContent": true

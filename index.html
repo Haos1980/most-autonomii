@@ -8,11 +8,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Most Autonomii" />
   <meta name="description" content="Pokój grupowy Adama, HAOS, Grok Proxy i Bestii — czat w aplikacji, zadania, opcjonalny mirror Telegram." />
-  <link rel="manifest" href="manifest.json?v=1.1.0" />
+  <link rel="manifest" href="manifest.json?v=1.1.1" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>Most Autonomii</title>
-  <link rel="stylesheet" href="style.css?v=1.1.0" />
+  <link rel="stylesheet" href="style.css?v=1.1.1" />
 </head>
 <body>
   <div id="app">
@@ -107,10 +107,10 @@
         <article class="card">
           <h2>Opcjonalnie: mirror Telegram</h2>
           <p>Bridge może dopisywać wiadomości z grupy <strong>Most autonomii</strong> do pokoju i odwrotnie (outbox). To zaawansowana ścieżka — nie jest wymagana do rozmowy w aplikacji.</p>
-          <a class="btn ghost block" id="tgDeepLink" href="https://t.me/" target="_blank" rel="noopener">Otwórz Telegram — Most autonomii</a>
+          <button type="button" class="btn ghost block" id="tgDeepLink" title="Mirror TG tylko przez bot API — nie otwiera aplikacji Telegram">Mirror Telegram (tylko bot API, bez otwierania app)</button>
           <div class="composer-actions" style="margin-top:10px;gap:8px;display:flex;flex-wrap:wrap">
             <button type="button" class="btn ghost" id="btnCopyTg" title="Kopiuj / kolejka do Telegrama">📋 TG</button>
-            <button type="button" class="btn ghost" id="btnSendTg" title="Opcjonalnie: wyślij do TG (kolejka mostu)">Wyślij do TG</button>
+            <button type="button" class="btn ghost" id="btnSendTg" title="Opcjonalnie: niewidoczny mirror bot API (bez otwierania Telegrama)">Wyślij do TG</button>
           </div>
           <p class="hint">Deep link ustawisz w ☰. Bot + privacy: zobacz CONNECT.md.</p>
         </article>
@@ -157,7 +157,7 @@
           </label>
         </details>
         <label>Deep link Telegram (opcjonalnie)
-          <input type="url" id="cfgTgLink" placeholder="Most autonomii — https://t.me/+…" />
+          <input type="url" id="cfgTgLink" placeholder="opcjonalnie zapis (nigdy nie otwierany z APK)" />
         </label>
         <label class="check">
           <input type="checkbox" id="cfgPollRoom" checked />
@@ -175,7 +175,7 @@
           <button type="button" class="btn primary" id="btnSaveCfg">Zapisz</button>
           <button type="button" class="btn ghost danger" id="btnClearAll">Wyczyść dane lokalne</button>
         </div>
-        <p class="hint">Wersja PWA v1.1.0 · pokój w aplikacji · Haos1980/most-autonomii</p>
+        <p class="hint">Wersja PWA v1.1.2 · pokój w APK · bez otwierania Telegrama · Haos1980/most-autonomii</p>
       </div>
     </aside>
 
@@ -197,6 +197,6 @@
 
     <div class="toast" id="toast" hidden></div>
   </div>
-  <script src="app.js?v=1.1.0" defer></script>
+  <script src="app.js?v=1.1.1" defer></script>
 </body>
 </html>

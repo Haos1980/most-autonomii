@@ -16,3 +16,13 @@ dist/*.apk
 local.properties
 node_modules/
 www/
+
+# HAOS-baked Capacitor secrets (never commit / never Pages)
+native-config.json
+**/native-config.json
+bridge/commands.jsonl
+bridge/bridge.pid
+bridge/bridge.lock
+bridge/__pycache__/
+bridge/diag_last.json
+bridge/bot_identity.json

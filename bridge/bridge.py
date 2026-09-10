@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Most Autonomii — room.json hub + optional Telegram mirror (long-poll).
 
-In-app room is primary: watches data/room.json for adam→haos mentions and replies
-in-room (no Telegram required for those replies). Telegram inbound→room remains
-an optional mirror.
+In-app room is primary: watches data/room.json for adam→haos/bestia/proxy/grok
+and replies or relays in-room (no Telegram UI). Telegram inbound→room remains
+an optional Bot API mirror only.
 
 Reads TELEGRAM_BOT_TOKEN from process env (or bridge/.env). Never logs the token.
 """
@@ -431,17 +431,41 @@ def init_room_seen(state: dict) -> None:
     log(f"room_seen_ids initialized n={len(state['room_seen_ids'])}")
 
 
-def process_room_haos(state: dict) -> bool:
-    """Watch local data/room.json for new adam→haos mentions; reply in-room (no TG).
+def _mirror_group_text(state: dict, text: str) -> bool:
+    """Invisible Bot API mirror to bound group. Never opens Telegram UI."""
+    chat_id = state.get("chat_id")
+    if not chat_id or not text:
+        return False
+    try:
+        resp = api(
+            "sendMessage",
+            {
+                "chat_id": str(chat_id),
+                "text": str(text)[:4000],
+                "disable_web_page_preview": "true",
+            },
+            timeout=30,
+        )
+        return bool(resp.get("ok"))
+    except Exception as e:
+        log(f"group mirror send failed: {e}")
+        return False
 
+
+def process_room_haos(state: dict) -> bool:
+    """Watch room.json for new adam (app/non-TG) agent commands; reply in-room.
+
+    Handles haos fully; for bestia/proxy/grok posts an honest HAOS relay note in-room
+    (room.json is source of truth — other bots often ignore bot messages).
+    Also appends a routed command record and tries invisible group Bot API mirror.
     Skips telegram/outbox/bridge-sourced messages (those already get maybe_reply_haos).
-    Tracks processed ids in bridge/state.json → room_seen_ids.
     """
     init_room_seen(state)
     room = load_room()
     seen = set(state.get("room_seen_ids") or [])
     changed = False
     new_seen = list(state.get("room_seen_ids") or [])
+    AGENT_SKIP_SOURCES = ("telegram", "outbox", "bridge", "telegram-dm", "telegram→routed")
 
     for m in room.get("messages") or []:
         mid = m.get("id")
@@ -450,39 +474,118 @@ def process_room_haos(state: dict) -> bool:
         author = (m.get("author") or "").lower()
         text = (m.get("text") or "").strip()
         source = (m.get("source") or "").lower()
-        # Always consume id; only reply for in-app adam haos mentions
-        should_reply = (
+        # Always consume id; only act on in-app adam agent mentions
+        is_app_adam = (
             author == "adam"
             and text
-            and source not in ("telegram", "outbox", "bridge", "telegram-dm")
-            and HAOS_MENTION_RE.match(text)
+            and source not in AGENT_SKIP_SOURCES
         )
-        if should_reply:
-            mm = HAOS_MENTION_RE.match(text)
-            rest = text[mm.end():].lstrip(" :,-—").strip() if mm else ""
-            ack = f"HAOS: ok — {rest}" if rest else "HAOS: ok — słyszę (pokój)."
-            if len(ack) > 400:
-                ack = ack[:397] + "..."
-            reply_id = f"haos_room_{mid}"
+        route_m = ROUTE_RE.match(text) if is_app_adam else None
+        if is_app_adam and route_m:
+            route = route_m.group(1).lower()
+            if route == "grok":
+                route_key = "proxy"
+            else:
+                route_key = route
+            rest = text[route_m.end():].lstrip(" :,-—").strip()
             ids = {x.get("id") for x in room.get("messages") or []}
-            if reply_id not in ids and reply_id not in seen:
-                ts_ms = int(time.time() * 1000)
-                room.setdefault("messages", []).append(
+            ts_ms = int(time.time() * 1000)
+            at_iso = now_iso()
+
+            # Routed command record (bridge/commands.jsonl)
+            try:
+                append_command(
+                    route_key,
+                    text,
                     {
-                        "id": reply_id,
-                        "author": "haos",
-                        "text": ack,
-                        "ts": ts_ms,
-                        "at": now_iso(),
-                        "source": "room",
-                        "tag": "haos-room",
-                    }
+                        "from": "adam",
+                        "source": source or "app",
+                        "msg_id": mid,
+                        "rest": rest,
+                    },
                 )
-                if len(room["messages"]) > 500:
-                    room["messages"] = room["messages"][-500:]
-                presence_bump(room, "haos")
-                changed = True
-                log(f"room haos reply id={reply_id} for adam msg={mid}")
+            except Exception as e:
+                log(f"append_command err: {e}")
+
+            if route_key == "haos":
+                ack = f"HAOS: ok — {rest}" if rest else "HAOS: ok — słyszę (pokój)."
+                if len(ack) > 400:
+                    ack = ack[:397] + "..."
+                reply_id = f"haos_room_{mid}"
+                if reply_id not in ids and reply_id not in seen:
+                    room.setdefault("messages", []).append(
+                        {
+                            "id": reply_id,
+                            "author": "haos",
+                            "text": ack,
+                            "ts": ts_ms,
+                            "at": at_iso,
+                            "source": "room",
+                            "tag": "haos-room",
+                        }
+                    )
+                    presence_bump(room, "haos")
+                    changed = True
+                    log(f"room haos reply id={reply_id} for adam msg={mid}")
+            else:
+                # bestia / proxy — honest in-room relay (no silent APK)
+                label = "Bestii" if route_key == "bestia" else "Proxy"
+                who = "Bestia" if route_key == "bestia" else "Proxy"
+                relay = (
+                    f"HAOS: przekazuję {label} w pokoju…"
+                    + (f" ({rest[:120]})" if rest else "")
+                )
+                relay_id = f"haos_relay_{route_key}_{mid}"
+                if relay_id not in ids and relay_id not in seen:
+                    room.setdefault("messages", []).append(
+                        {
+                            "id": relay_id,
+                            "author": "haos",
+                            "text": relay,
+                            "ts": ts_ms,
+                            "at": at_iso,
+                            "source": "room",
+                            "tag": f"relay-{route_key}",
+                        }
+                    )
+                    presence_bump(room, "haos")
+                    changed = True
+                    log(f"room relay {route_key} id={relay_id} for adam msg={mid}")
+
+                note_id = f"{route_key}_call_{mid}"
+                if note_id not in ids and note_id not in seen:
+                    note = (
+                        f"{who}: wołana w pokoju"
+                        + (f" — {rest[:200]}" if rest else " — czekam na odpowiedź agenta.")
+                        + " (room.json = źródło prawdy; inne boty często ignorują wiadomości bota)"
+                    )
+                    room.setdefault("messages", []).append(
+                        {
+                            "id": note_id,
+                            "author": route_key,
+                            "text": note,
+                            "ts": ts_ms + 1,
+                            "at": at_iso,
+                            "source": "room",
+                            "tag": f"{route_key}-called",
+                        }
+                    )
+                    # Honest presence: called but not a live agent reply path
+                    room.setdefault("presence", {})
+                    room["presence"][route_key] = "away"
+                    changed = True
+                    log(f"room {route_key} call note id={note_id}")
+
+            if len(room.get("messages") or []) > 500:
+                room["messages"] = room["messages"][-500:]
+
+            # Optional invisible TG group mirror (Bot API only)
+            try:
+                ok = _mirror_group_text(state, text)
+                log(f"group mirror route={route_key} ok={ok}")
+            except Exception as e:
+                log(f"group mirror err: {e}")
+
         new_seen.append(mid)
         seen.add(mid)
 
@@ -494,8 +597,8 @@ def process_room_haos(state: dict) -> bool:
         state["last_sync_at"] = now_iso()
         save_state(state)
         write_status(state, {"running": True})
-        gh_put_file(ROOM_PATH, "bridge: HAOS in-room reply → room.json")
-        gh_put_file(STATUS_PATH, "bridge: status after room haos")
+        gh_put_file(ROOM_PATH, "bridge: in-room agent relay → room.json")
+        gh_put_file(STATUS_PATH, "bridge: status after room agents")
         return True
     save_state(state)
     return False

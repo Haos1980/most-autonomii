@@ -1,4 +1,4 @@
-/* Most Autonomii — v1.1 in-app room (localStorage + room.json publish/poll; Telegram optional mirror) */
+/* Most Autonomii — v1.1.2 in-app room (localStorage + room.json; TG mirror = bot API only, never open app) */
 (() => {
   'use strict';
 
@@ -11,7 +11,7 @@
 
   const DEFAULTS = {
     roomId: 'most-adam',
-    tgLink: 'https://t.me/', // opcjonalny deep link (mirror TG)
+    tgLink: '', // opcjonalny zapis deep linku — NIGDY nie otwierany z APK
     pollRoom: true,
     ghRepo: 'Haos1980/most-autonomii',
     ghToken: '', // localStorage only — never log / never commit
@@ -157,7 +157,18 @@
     renderMessages();
     renderTasks();
     const tgLinkEl = $('tgDeepLink');
-    if (tgLinkEl) tgLinkEl.href = cfg.tgLink || 'https://t.me/';
+    // Never set href to t.me — button is informational / optional mirror hint only
+    if (tgLinkEl) {
+      if (tgLinkEl.tagName === 'A') {
+        tgLinkEl.removeAttribute('href');
+        tgLinkEl.setAttribute('role', 'button');
+      }
+      const link = (cfg.tgLink || '').trim();
+      tgLinkEl.dataset.tgLink = link;
+      tgLinkEl.title = link && !/^https:\/\/t\.me\/?$/.test(link)
+        ? ('Zapisany deep link (nie otwierany z APK): ' + link)
+        : 'Mirror TG tylko przez bot API (niewidocznie) — bez otwierania aplikacji Telegram';
+    }
     $('cfgRoomId').value = cfg.roomId;
     $('cfgTgLink').value = cfg.tgLink || '';
     $('cfgPollRoom').checked = !!cfg.pollRoom;
@@ -391,6 +402,16 @@
       });
     }
 
+    const tgDeepLinkBtn = $('tgDeepLink');
+    if (tgDeepLinkBtn) {
+      tgDeepLinkBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Hard rule: never navigate to t.me / never open Telegram app
+        flushOutboxToClipboardOrBridge();
+      });
+    }
+
     // tasks
     $('taskForm').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -463,7 +484,7 @@
       const newRoom = ($('cfgRoomId').value || 'most-adam').trim();
       const roomChanged = newRoom !== cfg.roomId;
       cfg.roomId = newRoom;
-      cfg.tgLink = ($('cfgTgLink').value || 'https://t.me/').trim();
+      cfg.tgLink = ($('cfgTgLink').value || '').trim();
       cfg.pollRoom = $('cfgPollRoom').checked;
       cfg.presence = { ...cfg.presence, adam: $('cfgPresence').value };
       const repoEl = $('cfgGhRepo');
@@ -570,31 +591,7 @@
     return null;
   }
 
-  function hasTgDeepLink() {
-    const link = (cfg.tgLink || '').trim();
-    return !!(link && link !== 'https://t.me/' && link !== 'https://t.me');
-  }
-
-  function openTelegramWithText(text) {
-    const trimmed = String(text || '').trim();
-    if (!trimmed) return false;
-    if (!hasTgDeepLink()) {
-      toast('ustaw deep link grupy');
-      return false;
-    }
-    const link = (cfg.tgLink || '').trim();
-    const encoded = encodeURIComponent(trimmed);
-    // Share sheet with deep-link / invite URL + message text (works in Capacitor via external browser/TG)
-    const url = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encoded;
-    try {
-      const w = window.open(url, '_blank');
-      if (!w) window.location.href = url;
-    } catch (_) {
-      try { window.location.href = url; } catch (__) {}
-    }
-    return true;
-  }
-
+  // External Telegram UI launch helpers removed — bot API mirror only
 
   function hasNativeTransport() {
     return !!(nativeCfg && ((nativeCfg.tgBotToken && nativeCfg.tgChatId) || nativeCfg.ghToken));
