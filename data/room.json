@@ -1,6 +1,6 @@
 {
   "roomId": "most-adam",
-  "updatedAt": "2026-09-10T20:14:52Z",
+  "updatedAt": "2026-09-10T20:14:57Z",
   "note": "Synced by Telegram bridge (HAOS). PWA polls this file.",
   "presence": {
     "adam": "online",
@@ -403,18 +403,18 @@
       "tag": "telegram→routed"
     },
     {
-      "id": "tg_6034019716_37",
-      "author": "haos",
-      "text": "HAOS: chwila — odpowiadam naprawdę (nie stub).",
-      "ts": 1789071292081,
-      "at": "2026-09-10T20:14:52Z",
-      "source": "bridge",
-      "tag": "haos-thinking"
+      "id": "tg_6034019716_36",
+      "author": "adam",
+      "text": "Haos 4x4 ile to jest",
+      "ts": 1789071291000,
+      "at": "2026-09-10T20:14:51Z",
+      "source": "telegram",
+      "tag": "telegram-dm"
     }
   ],
   "tasks": [],
   "bridge": {
-    "lastSyncAt": "2026-09-10T20:14:52Z",
+    "lastSyncAt": "2026-09-10T20:14:57Z",
     "source": "telegram"
   }
 }
