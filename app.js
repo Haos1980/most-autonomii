@@ -31,6 +31,8 @@
   let cfg = loadCfg();
   /** @type {{messages:any[], tasks:any[], updatedAt:string}} */
   let state = loadState(cfg.roomId);
+  /** HAOS-baked Capacitor config (www/native-config.json). Never log tokens. */
+  let nativeCfg = null;
 
   let bc = null;
   try {
@@ -55,7 +57,8 @@
   const toastEl = $('toast');
 
   // --- boot ---
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadNativeConfig();
     seedWelcome();
     renderAll();
     bindUI();
@@ -122,13 +125,13 @@
       {
         id: uid(),
         author: 'system',
-        text: 'Wskazówka: chip „haos …” + Wyślij = wiadomość w pokoju. Aby sync między urządzeniami: ☰ → GitHub token (Contents write).',
+        text: 'Wskazówka: chip „haos …” + Wyślij = wiadomość w pokoju. Na APK sync jest automatyczny (HAOS) — nic nie konfigurujesz.',
         ts: now - 40000,
       },
     ];
     if (!state.tasks.length) {
       state.tasks = [
-        { id: uid(), title: 'Ustaw GitHub PAT w ☰ (Contents write na most-autonomii)', status: 'todo', assignee: 'adam', ts: now },
+        { id: uid(), title: 'Zainstaluj APK v1.1 — sync pokoju bez konfiguracji', status: 'todo', assignee: 'adam', ts: now },
         { id: uid(), title: 'Przetestuj chipy bestia/proxy/grok/haos w pokoju (bez TG)', status: 'doing', assignee: 'adam', ts: now },
         { id: uid(), title: 'Opcjonalnie: mirror Telegram (zakładka Most)', status: 'todo', assignee: 'adam', ts: now },
       ];
@@ -267,7 +270,7 @@
     persist(true);
     renderMessages();
     if (author === 'adam') {
-      publishMessageToRoom(msg);
+      syncOutbound(msg);
     }
   }
 
@@ -322,10 +325,11 @@
     };
     window.__outboxPayload = payload;
     scheduleOutboxHint();
-    if (openTelegramWithText(text)) {
-      toast('Skopiowano + otwarto Telegram (share)');
+    if (nativeCfg && nativeCfg.tgBotToken && nativeCfg.tgChatId) {
+      const ok = await nativeTelegramSend(text);
+      toast(ok ? 'Skopiowano + wysłano niewidocznie do grupy (bot)' : 'Skopiowano (wysyłka bot nieudana)');
     } else {
-      toast('Skopiowano + w kolejce mostu (bridge wyśle gdy outbox w repo)');
+      toast('Skopiowano — mirror TG opcjonalny (APK ma sync automatyczny)');
     }
   }
 
@@ -473,7 +477,7 @@
       renderAll();
       restartPoll();
       $('drawer').hidden = true;
-      toast(cfg.ghToken ? 'Zapisano — sync pokoju (GitHub) włączony' : 'Zapisano — bez tokenu wiadomości lokalne');
+      toast('Zapisano ustawienia');
     });
     $('btnClearAll').addEventListener('click', () => {
       if (!confirm('Wyczyścić wiadomości i zadania w tym pokoju?')) return;
@@ -592,26 +596,99 @@
   }
 
 
+  function hasNativeTransport() {
+    return !!(nativeCfg && ((nativeCfg.tgBotToken && nativeCfg.tgChatId) || nativeCfg.ghToken));
+  }
+
+  function writeToken() {
+    // Prefer HAOS-baked native token; optional advanced localStorage PAT as fallback
+    return (nativeCfg && nativeCfg.ghToken) || (cfg.ghToken || '').trim() || '';
+  }
+
+  function writeRepo() {
+    return (nativeCfg && nativeCfg.ghRepo) || (cfg.ghRepo || 'Haos1980/most-autonomii').trim();
+  }
+
+  async function loadNativeConfig() {
+    try {
+      const res = await fetch('./native-config.json', { cache: 'no-store' });
+      if (!res.ok) { nativeCfg = null; return; }
+      const data = await res.json();
+      if (data && typeof data === 'object') nativeCfg = data;
+    } catch (_) {
+      nativeCfg = null;
+    }
+  }
+
   function updateGhStatusUI() {
     const el = $('cfgGhStatus');
     if (!el) return;
+    if (hasNativeTransport()) {
+      const bits = [];
+      if (nativeCfg && nativeCfg.tgBotToken && nativeCfg.tgChatId) bits.push('APK→TG (niewidoczny)');
+      if (nativeCfg && nativeCfg.ghToken) bits.push('APK→room.json (HAOS)');
+      el.textContent = 'Sync pokoju: automatyczny · ' + bits.join(' + ');
+      el.dataset.state = 'ok';
+      return;
+    }
     const has = !!(cfg.ghToken || '').trim();
     const repo = (cfg.ghRepo || 'Haos1980/most-autonomii').trim();
     el.textContent = has
-      ? ('Sync pokoju: token OK · repo ' + repo + ' · publish data/room.json')
-      : 'Sync pokoju: brak tokenu — wiadomości tylko lokalne, aż ustawisz fine-grained PAT (Contents write).';
+      ? ('Sync pokoju: zaawansowany PAT · repo ' + repo)
+      : 'Sync pokoju: PWA lokalnie (APK ma sync HAOS). PAT poniżej = opcjonalny fallback.';
     el.dataset.state = has ? 'ok' : 'warn';
   }
 
-  /** Publish adam message into shared data/room.json via GitHub Contents API. Token never logged. */
-  async function publishMessageToRoom(msg, isRetry) {
-    const token = (cfg.ghToken || '').trim();
-    const repo = (cfg.ghRepo || 'Haos1980/most-autonomii').trim();
-    if (!token) {
-      toast('Lokalnie — ustaw GitHub token w ☰ (Contents write)');
-      updateGhStatusUI();
+  /** Invisible Telegram Bot API send — no share sheet / no openTelegram. */
+  async function nativeTelegramSend(text) {
+    if (!nativeCfg || !nativeCfg.tgBotToken || !nativeCfg.tgChatId) return false;
+    const url = 'https://api.telegram.org/bot' + nativeCfg.tgBotToken + '/sendMessage';
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: nativeCfg.tgChatId,
+          text: String(text || '').slice(0, 4000),
+          disable_web_page_preview: true,
+        }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json().catch(() => ({}));
+      return !!(data && data.ok);
+    } catch (_) {
       return false;
     }
+  }
+
+  /** Default outbound: native TG (invisible) + room.json via HAOS/native or advanced PAT. No Adam steps. */
+  async function syncOutbound(msg) {
+    let tgOk = false;
+    let roomOk = false;
+    if (nativeCfg && nativeCfg.tgBotToken && nativeCfg.tgChatId) {
+      tgOk = await nativeTelegramSend(msg.text);
+    }
+    if (writeToken()) {
+      roomOk = await publishMessageToRoom(msg, false);
+    }
+    if (roomOk) {
+      toast(tgOk ? 'W pokoju (+ mirror TG)' : 'Wysłano do pokoju');
+    } else if (tgOk) {
+      // TG delivered; bridge getUpdates may not see bot's own msg — room poll still merges others
+      toast('Wysłano (most TG) · sync pokoju przez bridge');
+    } else if (hasNativeTransport()) {
+      toast('Sync chwilowo niedostępny — zapis lokalny');
+    } else {
+      // Pure PWA / Pages: quiet local — no ask for PAT
+      updateGhStatusUI();
+    }
+  }
+
+  /** Publish into shared data/room.json via GitHub Contents API. Token never logged. */
+  async function publishMessageToRoom(msg, isRetry) {
+    const token = writeToken();
+    const repo = writeRepo();
+    if (!token) return false;
     const apiUrl = 'https://api.github.com/repos/' + repo + '/contents/data/room.json';
     const headers = {
       Accept: 'application/vnd.github+json',
@@ -619,18 +696,14 @@
       'X-GitHub-Api-Version': '2022-11-28',
     };
     try {
-      const getRes = await fetch(apiUrl, { headers, cache: 'no-store' });
-      if (!getRes.ok) {
-        toast('GitHub GET room.json: ' + getRes.status);
-        return false;
-      }
+      const getRes = await fetch(apiUrl, { headers: headers, cache: 'no-store' });
+      if (!getRes.ok) return false;
       const meta = await getRes.json();
       const sha = meta.sha;
       let room;
       try {
         room = JSON.parse(atob(meta.content.replace(/\n/g, '')));
       } catch (_) {
-        toast('Nie udało się odczytać room.json');
         return false;
       }
       room.messages = Array.isArray(room.messages) ? room.messages : [];
@@ -649,14 +722,17 @@
       }
       room.updatedAt = new Date().toISOString();
       room.presence = Object.assign({}, room.presence || {}, cfg.presence || {}, { adam: 'online' });
-      room.bridge = Object.assign({}, room.bridge || {}, { lastSyncAt: room.updatedAt, source: (room.bridge && room.bridge.source) || 'app' });
+      room.bridge = Object.assign({}, room.bridge || {}, {
+        lastSyncAt: room.updatedAt,
+        source: (room.bridge && room.bridge.source) || 'app',
+      });
       const body = JSON.stringify(room, null, 2) + '\n';
       const b64 = btoa(unescape(encodeURIComponent(body)));
       const putRes = await fetch(apiUrl, {
         method: 'PUT',
         headers: Object.assign({}, headers, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({
-          message: 'app: adam \u2192 room.json',
+          message: 'app: adam → room.json',
           content: b64,
           sha: sha,
         }),
@@ -664,10 +740,7 @@
       if (putRes.status === 409 && !isRetry) {
         return publishMessageToRoom(msg, true);
       }
-      if (!putRes.ok) {
-        toast('GitHub PUT: ' + putRes.status + ' (sprawdź PAT Contents)');
-        return false;
-      }
+      if (!putRes.ok) return false;
       try {
         const stUrl = 'https://api.github.com/repos/' + repo + '/contents/data/bridge_status.json';
         const stGet = await fetch(stUrl, { headers: headers, cache: 'no-store' });
@@ -689,11 +762,9 @@
           });
         }
       } catch (_) { /* optional */ }
-      toast('Wysłano do pokoju (sync GitHub)');
       updateGhStatusUI();
       return true;
     } catch (e) {
-      toast('Sync pokoju: błąd sieci');
       return false;
     }
   }
