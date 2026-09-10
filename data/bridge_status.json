@@ -4,9 +4,8 @@
   "botId": 8945661387,
   "chatId": -1004364186396,
   "chatTitle": "Most autonomii",
-  "lastSyncAt": "2026-09-10T16:58:02Z",
+  "lastSyncAt": "2026-09-10T17:01:55Z",
   "lastError": null,
-  "updatedAt": "2026-09-10T17:01:06Z",
-  "running": false,
-  "note": "inject then restart"
+  "updatedAt": "2026-09-10T17:01:55Z",
+  "running": true
 }
