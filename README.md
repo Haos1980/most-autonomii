@@ -31,7 +31,7 @@ Telefon w tej samej sieci Wi‑Fi: `http://IP_KOMPUTERA:8080`
 - Czat grupowy z 4 awatarami / obecnością (online / away / busy)
 - **Wyślij** zostaje w pokoju (nie otwiera Telegrama)
 - Chipy: `bestia …`, `proxy …`, `grok …`, `haos …` — tylko wypełniają / wysyłają in-app
-- Sync: localStorage + poll `data/room.json`; z telefonu publish przez **GitHub PAT** w ☰ (Contents write)
+- Sync: localStorage + poll `data/room.json`; **APK sync automatyczny (HAOS)** — Adam nic nie konfiguruje
 - Bridge odpowiada na `haos …` **w pokoju** (bez wymogu TG)
 - Zakładka **Most**: opcjonalny mirror Telegram (📋 TG / Wyślij do TG)
 - Tablica zadań + PWA/APK
@@ -62,5 +62,5 @@ Offline: bundlowane lokalne www/. Poll data/room.json wlaczony domyslnie.
 ## Bridge (v1.1)
 
 `bridge/bridge.py` — room watcher (HAOS in-app) + opcjonalny long-poll Telegram (`TELEGRAM_BOT_TOKEN`).  
-PAT w aplikacji: ☰ → GitHub token. Szczegóły: [CONNECT.md](CONNECT.md).
+APK: native-config z builda (HAOS). Szczegóły: [CONNECT.md](CONNECT.md).
 
