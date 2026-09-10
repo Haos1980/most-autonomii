@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Most Autonomii — Telegram ↔ room.json bridge (long-poll).
+"""Most Autonomii — room.json hub + optional Telegram mirror (long-poll).
+
+In-app room is primary: watches data/room.json for adam→haos mentions and replies
+in-room (no Telegram required for those replies). Telegram inbound→room remains
+an optional mirror.
 
 Reads TELEGRAM_BOT_TOKEN from process env (or bridge/.env). Never logs the token.
 """
@@ -96,6 +100,7 @@ def load_state() -> dict:
         "chat_id": None,
         "chat_title": None,
         "seen_update_ids": [],
+        "room_seen_ids": [],
         "bot_username": None,
         "bot_id": None,
         "last_sync_at": None,
@@ -265,6 +270,26 @@ def presence_bump(room: dict, author: str) -> None:
         room["presence"][author] = "online"
 
 
+
+def backfill_message_at(room: dict) -> bool:
+    """Ensure every room message has ISO `at`; derive from ts when missing."""
+    changed = False
+    for m in room.get("messages") or []:
+        if m.get("at"):
+            continue
+        ts = m.get("ts")
+        try:
+            if isinstance(ts, (int, float)) and ts > 0:
+                sec = ts / 1000.0 if ts > 1e12 else float(ts)
+                m["at"] = datetime.fromtimestamp(sec, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            else:
+                m["at"] = now_iso()
+            changed = True
+        except Exception:
+            m["at"] = now_iso()
+            changed = True
+    return changed
+
 def append_message(room: dict, msg: dict, author: str, tag: str | None) -> bool:
     text = (msg.get("text") or msg.get("caption") or "").strip()
     if not text:
@@ -274,13 +299,15 @@ def append_message(room: dict, msg: dict, author: str, tag: str | None) -> bool:
     existing = {m.get("id") for m in room.get("messages") or []}
     if mid in existing:
         return False
-    ts = (msg.get("date") or int(time.time())) * 1000
+    date_s = int(msg.get("date") or int(time.time()))
+    ts = date_s * 1000
+    at_iso = datetime.fromtimestamp(date_s, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     entry = {
         "id": mid,
         "author": author,
         "text": text,
         "ts": ts,
-        "at": now_iso(),
+        "at": at_iso,
         "source": "telegram",
     }
     if tag:
@@ -302,24 +329,45 @@ HAOS_MENTION_RE = re.compile(
 )
 
 
-def maybe_reply_haos(msg: dict, state: dict) -> None:
-    """If inbound text starts with haos / /haos / @Brat_Bestii_Haos_bot, send a short Telegram ack."""
-    if not state.get("chat_id"):
-        return
+def maybe_reply_haos(
+    msg: dict,
+    state: dict,
+    reply_chat_id=None,
+    private: bool = False,
+) -> None:
+    """Ack HAOS mentions in group; in private DMs reply to any non-empty text."""
     text = (msg.get("text") or msg.get("caption") or "").strip()
     if not text:
         return
-    m = HAOS_MENTION_RE.match(text)
-    if not m:
+
+    inbound_chat = (msg.get("chat") or {}).get("id")
+    target = reply_chat_id if reply_chat_id is not None else inbound_chat
+    if target is None and not private:
+        target = state.get("chat_id")
+    if target is None:
         return
-    rest = text[m.end():].lstrip(" :,-—").strip()
-    ack = f"HAOS: ok — {rest}" if rest else "HAOS: ok — słyszę."
+
+    if private:
+        # Private chat with the bot: reply to ANY non-empty message
+        m = HAOS_MENTION_RE.match(text)
+        if m:
+            rest = text[m.end():].lstrip(" :,-—").strip()
+            ack = f"HAOS: ok — {rest}" if rest else "HAOS: ok — słyszę."
+        else:
+            ack = f"HAOS: ok — {text}"
+    else:
+        m = HAOS_MENTION_RE.match(text)
+        if not m:
+            return
+        rest = text[m.end():].lstrip(" :,-—").strip()
+        ack = f"HAOS: ok — {rest}" if rest else "HAOS: ok — słyszę."
+
     # keep acks short
     if len(ack) > 400:
         ack = ack[:397] + "..."
     try:
         params = {
-            "chat_id": str(state["chat_id"]),
+            "chat_id": str(target),
             "text": ack,
             "disable_web_page_preview": "true",
         }
@@ -327,11 +375,131 @@ def maybe_reply_haos(msg: dict, state: dict) -> None:
             params["reply_to_message_id"] = str(msg["message_id"])
         resp = api("sendMessage", params, timeout=30)
         if resp.get("ok"):
-            log(f"haos ack sent for msg_id={msg.get('message_id')}")
+            where = "dm" if private else "group"
+            log(f"haos ack ({where}) sent for msg_id={msg.get('message_id')} chat_id={target}")
+            # Mirror ack into room.json so APK/PWA sees HAOS (don't fail ack if write fails)
+            try:
+                result = resp.get("result") or {}
+                mid_tg = result.get("message_id")
+                ts_ms = int(time.time() * 1000)
+                if mid_tg is not None:
+                    mid = f"tg_{target}_{mid_tg}"
+                else:
+                    mid = f"haos_ack_{msg.get('message_id')}_{ts_ms}"
+                room = load_room()
+                ids = {m.get("id") for m in room.get("messages") or []}
+                if mid not in ids:
+                    at_iso = now_iso()
+                    room.setdefault("messages", []).append(
+                        {
+                            "id": mid,
+                            "author": "haos",
+                            "text": ack,
+                            "ts": ts_ms,
+                            "at": at_iso,
+                            "source": "bridge",
+                            "tag": "telegram-dm" if private else "haos-ack",
+                        }
+                    )
+                    if len(room["messages"]) > 500:
+                        room["messages"] = room["messages"][-500:]
+                    presence_bump(room, "haos")
+                    # save_room bumps updatedAt + bridge.lastSyncAt
+                    save_room(room)
+                    write_status(state, {"running": True})
+                    gh_put_file(ROOM_PATH, "bridge: HAOS ack → room.json")
+                    gh_put_file(STATUS_PATH, "bridge: status after haos ack")
+                    log(f"haos ack mirrored to room id={mid}")
+            except Exception as e:
+                log(f"haos ack room write failed (telegram ok): {e}")
         else:
             log(f"haos ack not ok: {str(resp)[:200]}")
     except Exception as e:
         log(f"haos ack err: {e}")
+
+
+def init_room_seen(state: dict) -> None:
+    """Mark existing room message ids as seen once so we do not backlog-reply."""
+    if state.get("_room_seen_initialized"):
+        return
+    room = load_room()
+    ids = [m.get("id") for m in (room.get("messages") or []) if m.get("id")]
+    prev = list(state.get("room_seen_ids") or [])
+    state["room_seen_ids"] = list(dict.fromkeys(prev + ids))[-2000:]
+    state["_room_seen_initialized"] = True
+    save_state(state)
+    log(f"room_seen_ids initialized n={len(state['room_seen_ids'])}")
+
+
+def process_room_haos(state: dict) -> bool:
+    """Watch local data/room.json for new adam→haos mentions; reply in-room (no TG).
+
+    Skips telegram/outbox/bridge-sourced messages (those already get maybe_reply_haos).
+    Tracks processed ids in bridge/state.json → room_seen_ids.
+    """
+    init_room_seen(state)
+    room = load_room()
+    seen = set(state.get("room_seen_ids") or [])
+    changed = False
+    new_seen = list(state.get("room_seen_ids") or [])
+
+    for m in room.get("messages") or []:
+        mid = m.get("id")
+        if not mid or mid in seen:
+            continue
+        author = (m.get("author") or "").lower()
+        text = (m.get("text") or "").strip()
+        source = (m.get("source") or "").lower()
+        # Always consume id; only reply for in-app adam haos mentions
+        should_reply = (
+            author == "adam"
+            and text
+            and source not in ("telegram", "outbox", "bridge", "telegram-dm")
+            and HAOS_MENTION_RE.match(text)
+        )
+        if should_reply:
+            mm = HAOS_MENTION_RE.match(text)
+            rest = text[mm.end():].lstrip(" :,-—").strip() if mm else ""
+            ack = f"HAOS: ok — {rest}" if rest else "HAOS: ok — słyszę (pokój)."
+            if len(ack) > 400:
+                ack = ack[:397] + "..."
+            reply_id = f"haos_room_{mid}"
+            ids = {x.get("id") for x in room.get("messages") or []}
+            if reply_id not in ids and reply_id not in seen:
+                ts_ms = int(time.time() * 1000)
+                room.setdefault("messages", []).append(
+                    {
+                        "id": reply_id,
+                        "author": "haos",
+                        "text": ack,
+                        "ts": ts_ms,
+                        "at": now_iso(),
+                        "source": "room",
+                        "tag": "haos-room",
+                    }
+                )
+                if len(room["messages"]) > 500:
+                    room["messages"] = room["messages"][-500:]
+                presence_bump(room, "haos")
+                changed = True
+                log(f"room haos reply id={reply_id} for adam msg={mid}")
+        new_seen.append(mid)
+        seen.add(mid)
+
+    state["room_seen_ids"] = new_seen[-2000:]
+    if changed:
+        room.setdefault("bridge", {})
+        room["bridge"]["lastSyncAt"] = now_iso()
+        save_room(room)
+        state["last_sync_at"] = now_iso()
+        save_state(state)
+        write_status(state, {"running": True})
+        gh_put_file(ROOM_PATH, "bridge: HAOS in-room reply → room.json")
+        gh_put_file(STATUS_PATH, "bridge: status after room haos")
+        return True
+    save_state(state)
+    return False
+
 
 
 def process_update(upd: dict, state: dict, room: dict) -> bool:
@@ -341,10 +509,22 @@ def process_update(upd: dict, state: dict, room: dict) -> bool:
         return False
     chat = msg.get("chat") or {}
     title = chat.get("title") or ""
-    # Discover / lock chat
+    ctype = chat.get("type")
+
+    # Private DMs to the bot: always process; never overwrite group binding
+    if ctype == "private":
+        author, _tag = map_author(msg)
+        tag = "telegram-dm"
+        if append_message(room, msg, author, tag):
+            log(f"msg from={author} tag={tag} id={msg.get('message_id')} dm_chat={chat.get('id')}")
+            changed = True
+        maybe_reply_haos(msg, state, reply_chat_id=chat.get("id"), private=True)
+        return changed
+
+    # Discover / lock group chat (never bind private ids)
     if is_target_chat(chat, state) or (
         state.get("chat_id") is None
-        and chat.get("type") in ("group", "supergroup")
+        and ctype in ("group", "supergroup")
         and any(h in title.lower() for h in GROUP_NAME_HINTS)
     ):
         if state.get("chat_id") != chat.get("id"):
@@ -356,7 +536,7 @@ def process_update(upd: dict, state: dict, room: dict) -> bool:
         return False
     elif state.get("chat_id") is None:
         # Not yet bound and not matching name — ignore
-        if chat.get("type") in ("group", "supergroup"):
+        if ctype in ("group", "supergroup"):
             log(f"skip group title={title!r} id={chat.get('id')} (waiting for Most autonomii)")
         return False
 
@@ -364,8 +544,8 @@ def process_update(upd: dict, state: dict, room: dict) -> bool:
     if append_message(room, msg, author, tag):
         log(f"msg from={author} tag={tag} id={msg.get('message_id')}")
         changed = True
-    # Reply on haos / @Brat_Bestii_Haos_bot triggers (inbound to bound chat)
-    maybe_reply_haos(msg, state)
+    # Group: reply only on haos / @Brat_Bestii_Haos_bot triggers
+    maybe_reply_haos(msg, state, reply_chat_id=state.get("chat_id"), private=False)
     return changed
 
 
@@ -500,6 +680,22 @@ def main() -> None:
             json.dumps({"pending": [], "updatedAt": now_iso()}, indent=2) + "\n", encoding="utf-8"
         )
 
+    # Seed room_seen_ids so we do not backlog-reply historical adam/haos mentions
+    try:
+        init_room_seen(state)
+    except Exception as e:
+        log(f"init_room_seen: {e}")
+
+    # Backfill missing ISO `at` on room messages and push if needed
+    try:
+        room0 = load_room()
+        if backfill_message_at(room0):
+            save_room(room0)
+            log("backfilled missing message.at — pushing room.json")
+            gh_put_file(ROOM_PATH, "bridge: backfill message.at ISO")
+    except Exception as e:
+        log(f"backfill at skipped: {e}")
+
     last_outbox = 0.0
     while True:
         try:
@@ -530,11 +726,21 @@ def main() -> None:
                 else:
                     save_state(state)
                     write_status(state, {"running": True, "ok": True})
-            # outbox poll
+            # outbox poll + in-room haos watcher (no TG required for room replies)
             if time.time() - last_outbox >= OUTBOX_POLL_S:
                 last_outbox = time.time()
                 process_outbox(state)
+                try:
+                    process_room_haos(state)
+                except Exception as e:
+                    log(f"room haos watcher err: {e}")
                 write_status(state, {"running": True})
+            else:
+                # Also check room each getUpdates cycle so replies are not stuck behind long-poll alone
+                try:
+                    process_room_haos(state)
+                except Exception as e:
+                    log(f"room haos watcher err: {e}")
         except TimeoutError:
             # Long-poll idle end can race urllib timeout; soft retry, no traceback spam
             log("getUpdates soft timeout — retry")
