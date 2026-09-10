@@ -145,14 +145,17 @@
         <label>ID pokoju (sync code)
           <input type="text" id="cfgRoomId" value="most-adam" />
         </label>
-        <label>GitHub token (PAT)
-          <input type="password" id="cfgGhToken" placeholder="fine-grained PAT · Contents write" autocomplete="off" />
-        </label>
-        <label>Repo (Contents API)
-          <input type="text" id="cfgGhRepo" value="Haos1980/most-autonomii" placeholder="Haos1980/most-autonomii" />
-        </label>
         <p class="hint" id="cfgGhStatus">Sync pokoju: —</p>
-        <p class="hint">Fine-grained PAT z uprawnieniem <strong>Contents: Read and write</strong> na to repo. Token tylko w localStorage — nigdy w logach / commitach. Bez tokenu: wiadomości lokalne.</p>
+        <details id="cfgAdvancedSync" style="margin:8px 0">
+          <summary style="cursor:pointer;opacity:.85">Zaawansowane: ręczny sync (opcjonalnie)</summary>
+          <p class="hint">APK synchronizuje się sam (HAOS). Poniższe pola tylko gdy budujesz bez native-config albo testujesz czysty PWA.</p>
+          <label>GitHub token (PAT) — fallback
+            <input type="password" id="cfgGhToken" placeholder="fine-grained PAT · Contents write" autocomplete="off" />
+          </label>
+          <label>Repo (Contents API)
+            <input type="text" id="cfgGhRepo" value="Haos1980/most-autonomii" placeholder="Haos1980/most-autonomii" />
+          </label>
+        </details>
         <label>Deep link Telegram (opcjonalnie)
           <input type="url" id="cfgTgLink" placeholder="Most autonomii — https://t.me/+…" />
         </label>
