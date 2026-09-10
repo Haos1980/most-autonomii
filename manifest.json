@@ -1,7 +1,7 @@
 {
   "name": "Most Autonomii",
   "short_name": "Most",
-  "description": "Wspólny hub Adama, HAOS, Grok Proxy i Bestii — czat, zadania, most do Telegrama.",
+  "description": "Pokój grupowy Adama, HAOS, Grok Proxy i Bestii — czat w aplikacji, zadania, opcjonalny Telegram.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
