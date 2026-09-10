@@ -1,5 +1,5 @@
 /* Most Autonomii — service worker (offline shell) */
-const CACHE = 'most-autonomii-v1.0.3';
+const CACHE = 'most-autonomii-v1.1.0';
 const ASSETS = [
   './',
   './index.html',
