@@ -7,12 +7,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Most Autonomii" />
-  <meta name="description" content="Wspólny hub Adama, HAOS, Grok Proxy i Bestii — czat, zadania, most do Telegrama." />
-  <link rel="manifest" href="manifest.json?v=1.0.3" />
+  <meta name="description" content="Pokój grupowy Adama, HAOS, Grok Proxy i Bestii — czat w aplikacji, zadania, opcjonalny mirror Telegram." />
+  <link rel="manifest" href="manifest.json?v=1.1.0" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>Most Autonomii</title>
-  <link rel="stylesheet" href="style.css?v=1.0.3" />
+  <link rel="stylesheet" href="style.css?v=1.1.0" />
 </head>
 <body>
   <div id="app">
@@ -36,8 +36,8 @@
     </section>
 
     <div class="bridge-banner" id="bridgeBanner" data-state="warn" role="status" aria-live="polite">
-      <span class="bridge-banner-label">Most</span>
-      <span id="bridgeBannerText">Ładowanie statusu mostu…</span>
+      <span class="bridge-banner-label">Pokój</span>
+      <span id="bridgeBannerText">Ładowanie sync pokoju…</span>
     </div>
 
     <nav class="tabs" role="tablist">
@@ -57,10 +57,8 @@
           <button type="button" class="chip" data-prefix="haos ">haos …</button>
         </div>
         <form class="composer" id="composer">
-          <textarea id="input" rows="1" placeholder="Napisz jako Adam… (Enter = wyślij)" autocomplete="off" enterkeyhint="send"></textarea>
+          <textarea id="input" rows="1" placeholder="Napisz do pokoju jako Adam… (Enter = wyślij)" autocomplete="off" enterkeyhint="send"></textarea>
           <div class="composer-actions">
-            <button type="button" class="btn ghost" id="btnCopyTg" title="Kopiuj / kolejka do Telegrama">📋 TG</button>
-            <button type="button" class="btn ghost" id="btnSendTg" title="Wyślij do TG (kolejka mostu)">Wyślij do TG</button>
             <button type="submit" class="btn primary" id="btnSend">Wyślij</button>
           </div>
           <p class="hint" id="outboxHint" style="margin:4px 8px 0;font-size:12px;opacity:.8"></p>
@@ -100,29 +98,37 @@
         </div>
       </section>
 
-      <!-- BRIDGE -->
+      <!-- BRIDGE (optional Telegram mirror) -->
       <section id="panel-bridge" class="panel" role="tabpanel" hidden>
         <article class="card">
-          <h2>Most do Telegrama</h2>
-          <p>Grupa docelowa: <strong>Most autonomii</strong>. Bridge long-polluje Bota API, dopisuje wiadomości do <code>data/room.json</code> i pushuje na GitHub Pages — PWA odświeża czat co ~4 s.</p>
-          <a class="btn primary block" id="tgDeepLink" href="https://t.me/" target="_blank" rel="noopener">Otwórz Telegram — Most autonomii</a>
-          <p class="hint">Domyślnie: grupa <strong>Most autonomii</strong>. Ustaw deep link w ☰ (bez linku: toast „ustaw deep link grupy”). Dodaj bota jako admina i wyłącz privacy w BotFather.</p>
+          <h2>Pokój w aplikacji</h2>
+          <p>APK/PWA to <strong>grupowy czat w aplikacji</strong> (Adam + HAOS + Bestia + Proxy). Wysyłanie zostaje w pokoju. Wspólny stan: <code>data/room.json</code> (poll co ~4 s). Telegram jest opcjonalnym mirrorem — nie otwiera się przy Wyślij.</p>
         </article>
         <article class="card">
-          <h2>Jak działa synchronizacja v2</h2>
+          <h2>Opcjonalnie: mirror Telegram</h2>
+          <p>Bridge może dopisywać wiadomości z grupy <strong>Most autonomii</strong> do pokoju i odwrotnie (outbox). To zaawansowana ścieżka — nie jest wymagana do rozmowy w aplikacji.</p>
+          <a class="btn ghost block" id="tgDeepLink" href="https://t.me/" target="_blank" rel="noopener">Otwórz Telegram — Most autonomii</a>
+          <div class="composer-actions" style="margin-top:10px;gap:8px;display:flex;flex-wrap:wrap">
+            <button type="button" class="btn ghost" id="btnCopyTg" title="Kopiuj / kolejka do Telegrama">📋 TG</button>
+            <button type="button" class="btn ghost" id="btnSendTg" title="Opcjonalnie: wyślij do TG (kolejka mostu)">Wyślij do TG</button>
+          </div>
+          <p class="hint">Deep link ustawisz w ☰. Bot + privacy: zobacz CONNECT.md.</p>
+        </article>
+        <article class="card">
+          <h2>Jak działa sync pokoju</h2>
           <ul class="bullets">
-            <li><strong>Telegram → PWA:</strong> bridge <code>getUpdates</code> → <code>data/room.json</code> → poll PWA.</li>
-            <li><strong>PWA → Telegram:</strong> chip / „Wyślij do TG” → schowek + lokalna kolejka; HAOS może wypchnąć <code>data/outbox.json</code>, bridge robi <code>sendMessage</code>.</li>
-            <li><strong>Ta sama przeglądarka:</strong> BroadcastChannel + localStorage.</li>
-            <li><strong>Między urządzeniami:</strong> snapshot ⇄ albo live room.json z Pages.</li>
+            <li><strong>W pokoju:</strong> Wyślij → localStorage + (z PAT) publish <code>data/room.json</code>.</li>
+            <li><strong>Odczyt:</strong> poll Pages co ~4 s — widać HAOS / Bestię / Proxy.</li>
+            <li><strong>TG → pokój (opcjonalnie):</strong> bridge <code>getUpdates</code> → room.json.</li>
+            <li><strong>Pokój → TG (opcjonalnie):</strong> „Wyślij do TG” powyżej / outbox.</li>
           </ul>
         </article>
         <article class="card">
-          <h2>Status mostu</h2>
+          <h2>Status sync / mostu</h2>
           <p class="badge-row">
             <span class="badge warn" id="bridgeLiveBadge">bridge…</span>
           </p>
-          <p id="bridgeStatusLine" class="hint">Ładowanie statusu mostu…</p>
+          <p id="bridgeStatusLine" class="hint">Ładowanie statusu…</p>
           <p>Szczegóły: <a href="CONNECT.md" target="_blank" rel="noopener">CONNECT.md</a></p>
         </article>
       </section>
@@ -139,12 +145,20 @@
         <label>ID pokoju (sync code)
           <input type="text" id="cfgRoomId" value="most-adam" />
         </label>
-        <label>Deep link Telegram
+        <label>GitHub token (PAT)
+          <input type="password" id="cfgGhToken" placeholder="fine-grained PAT · Contents write" autocomplete="off" />
+        </label>
+        <label>Repo (Contents API)
+          <input type="text" id="cfgGhRepo" value="Haos1980/most-autonomii" placeholder="Haos1980/most-autonomii" />
+        </label>
+        <p class="hint" id="cfgGhStatus">Sync pokoju: —</p>
+        <p class="hint">Fine-grained PAT z uprawnieniem <strong>Contents: Read and write</strong> na to repo. Token tylko w localStorage — nigdy w logach / commitach. Bez tokenu: wiadomości lokalne.</p>
+        <label>Deep link Telegram (opcjonalnie)
           <input type="url" id="cfgTgLink" placeholder="Most autonomii — https://t.me/+…" />
         </label>
         <label class="check">
           <input type="checkbox" id="cfgPollRoom" checked />
-          Polluj <code>data/room.json</code> co 4 s (most live)
+          Polluj <code>data/room.json</code> co 4 s (sync pokoju)
         </label>
         <p class="hint" id="cfgBridgeStatus">Status mostu: —</p>
         <label>Obecność Adama
@@ -158,7 +172,7 @@
           <button type="button" class="btn primary" id="btnSaveCfg">Zapisz</button>
           <button type="button" class="btn ghost danger" id="btnClearAll">Wyczyść dane lokalne</button>
         </div>
-        <p class="hint">Wersja PWA v1.0.3 · most Telegram live · Haos1980/most-autonomii</p>
+        <p class="hint">Wersja PWA v1.1.0 · pokój w aplikacji · Haos1980/most-autonomii</p>
       </div>
     </aside>
 
@@ -180,6 +194,6 @@
 
     <div class="toast" id="toast" hidden></div>
   </div>
-  <script src="app.js?v=1.0.3" defer></script>
+  <script src="app.js?v=1.1.0" defer></script>
 </body>
 </html>
