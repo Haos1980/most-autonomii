@@ -1,6 +1,6 @@
 {
   "roomId": "most-adam",
-  "updatedAt": "2026-09-10T17:50:08.881Z",
+  "updatedAt": "2026-09-10T17:50:11Z",
   "note": "Synced by Telegram bridge (HAOS). PWA polls this file.",
   "presence": {
     "adam": "online",
@@ -12,19 +12,19 @@
     {
       "id": "tg_-1004364186396_250",
       "author": "adam",
-      "text": "Haos czeÅÄ",
+      "text": "Haos cześć",
       "ts": 1788886093000,
       "source": "telegram",
-      "tag": "telegramârouted",
+      "tag": "telegram→routed",
       "at": "2026-09-08T16:48:13Z"
     },
     {
       "id": "tg_-1004364186396_252",
       "author": "adam",
-      "text": "bestia SprawdÅº na telefonie Adama aplikacjÄ/APK Most Autonomii (pl.haos.mostautonomii). Nie dziaÅa. ZrÃ³b od A do Z: 1) czy APK jest zainstalowane, 2) odpal i zobacz co siÄ dzieje (crash / biaÅy ekran / bÅÄd sieci), 3) zrÃ³b screeny, 4) sprawdÅº czy otwiera https://haos1980.github.io/most-autonomii/ w Chrome jako porÃ³wnanie, 5) napisz w grupie co dokÅadnie nie dziaÅa i co widaÄ. PeÅna autonomia na telefonie.",
+      "text": "bestia Sprawdź na telefonie Adama aplikację/APK Most Autonomii (pl.haos.mostautonomii). Nie działa. Zrób od A do Z: 1) czy APK jest zainstalowane, 2) odpal i zobacz co się dzieje (crash / biały ekran / błąd sieci), 3) zrób screeny, 4) sprawdź czy otwiera https://haos1980.github.io/most-autonomii/ w Chrome jako porównanie, 5) napisz w grupie co dokładnie nie działa i co widać. Pełna autonomia na telefonie.",
       "ts": 1788887886000,
       "source": "telegram",
-      "tag": "telegramârouted",
+      "tag": "telegram→routed",
       "at": "2026-09-08T17:18:06Z"
     },
     {
@@ -93,7 +93,7 @@
     {
       "id": "tg_-1004364186396_268",
       "author": "adam",
-      "text": "https://t.me/+t1HhCS-aQ1UyZmU8\nHaos czeÅÄ",
+      "text": "https://t.me/+t1HhCS-aQ1UyZmU8\nHaos cześć",
       "ts": 1788977786000,
       "at": "2026-09-09T18:16:26Z",
       "source": "telegram",
@@ -106,7 +106,7 @@
       "ts": 1789059056000,
       "at": "2026-09-10T16:50:56Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_271",
@@ -115,7 +115,7 @@
       "ts": 1789059065000,
       "at": "2026-09-10T16:51:05Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_274",
@@ -124,12 +124,12 @@
       "ts": 1789059073000,
       "at": "2026-09-10T16:51:13Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_6034019716_17",
       "author": "adam",
-      "text": "CzeÅÄ",
+      "text": "Cześć",
       "ts": 1789059481000,
       "at": "2026-09-10T16:58:01Z",
       "source": "telegram",
@@ -138,7 +138,7 @@
     {
       "id": "haos_ack_live_1789059664652",
       "author": "haos",
-      "text": "HAOS: most live â APK powinien zobaczyÄ tÄ wiadomoÅÄ w ~kilka sekund.",
+      "text": "HAOS: most live — APK powinien zobaczyć tę wiadomość w ~kilka sekund.",
       "ts": 1789059664652,
       "at": "2026-09-10T17:01:04Z",
       "source": "bridge",
@@ -147,25 +147,25 @@
     {
       "id": "haos_live_1789059715095",
       "author": "haos",
-      "text": "HAOS: most live â jeÅli to widzisz w APK, sync dziaÅa.",
+      "text": "HAOS: most live — jeśli to widzisz w APK, sync działa.",
       "ts": 1789059715095,
       "at": "2026-09-10T17:01:55Z",
       "source": "bridge",
       "tag": "haos-ack"
     },
     {
-      "id": "m_t7bvlslvmtvtomwc",
-      "author": "adam",
-      "text": "bestia",
-      "ts": 1789062607596,
-      "at": "2026-09-10T17:50:07.596Z",
-      "source": "app",
-      "tag": "app"
+      "id": "tg_-1004364186396_278",
+      "author": "haos",
+      "text": "Przyjalem. Mysle...",
+      "ts": 1789062610000,
+      "at": "2026-09-10T17:50:10Z",
+      "source": "telegram",
+      "tag": "telegram-bot"
     }
   ],
   "tasks": [],
   "bridge": {
-    "lastSyncAt": "2026-09-10T17:50:08.881Z",
-    "source": "haos-inject"
+    "lastSyncAt": "2026-09-10T17:50:11Z",
+    "source": "telegram"
   }
 }
