@@ -1,6 +1,6 @@
 {
   "roomId": "most-adam",
-  "updatedAt": "2026-09-10T20:14:57Z",
+  "updatedAt": "2026-09-10T20:22:17Z",
   "note": "Synced by Telegram bridge (HAOS). PWA polls this file.",
   "presence": {
     "adam": "online",
@@ -410,11 +410,56 @@
       "at": "2026-09-10T20:14:51Z",
       "source": "telegram",
       "tag": "telegram-dm"
+    },
+    {
+      "id": "tg_6034019716_38",
+      "author": "haos",
+      "text": "Cześć, tu HAOS. Napisz pytanie albo komendę — odpowiem krótko. W grupie wołaj mnie słowem haos.",
+      "ts": 1789071735681,
+      "at": "2026-09-10T20:22:15Z",
+      "source": "bridge",
+      "tag": "haos-drain"
+    },
+    {
+      "id": "tg_6034019716_39",
+      "author": "haos",
+      "text": "Menu: pytanie wprost (DM) albo w grupie z prefiksem haos. Komendy: /start, /menu, /settings.",
+      "ts": 1789071736258,
+      "at": "2026-09-10T20:22:16Z",
+      "source": "bridge",
+      "tag": "haos-drain"
+    },
+    {
+      "id": "tg_6034019716_40",
+      "author": "haos",
+      "text": "Ustawienia Most Autonomii: pokój most-adam, bot @Brat_Bestii_Haos_bot. Aplikacja: https://haos1980.github.io/most-autonomii/",
+      "ts": 1789071736831,
+      "at": "2026-09-10T20:22:16Z",
+      "source": "bridge",
+      "tag": "haos-drain"
+    },
+    {
+      "id": "tg_6034019716_41",
+      "author": "haos",
+      "text": "Tu HAOS, słucham. Co robimy?",
+      "ts": 1789071737388,
+      "at": "2026-09-10T20:22:17Z",
+      "source": "bridge",
+      "tag": "haos-drain"
+    },
+    {
+      "id": "tg_6034019716_42",
+      "author": "haos",
+      "text": "4×4 = 16.",
+      "ts": 1789071737935,
+      "at": "2026-09-10T20:22:17Z",
+      "source": "bridge",
+      "tag": "haos-drain"
     }
   ],
   "tasks": [],
   "bridge": {
-    "lastSyncAt": "2026-09-10T20:14:57Z",
-    "source": "telegram"
+    "lastSyncAt": "2026-09-10T20:22:17Z",
+    "source": "haos-drain"
   }
 }
