@@ -1,6 +1,6 @@
 {
   "roomId": "most-adam",
-  "updatedAt": "2026-09-10T19:06:04Z",
+  "updatedAt": "2026-09-10T19:06:44Z",
   "note": "Synced by Telegram bridge (HAOS). PWA polls this file.",
   "presence": {
     "adam": "online",
@@ -278,11 +278,20 @@
       "at": "2026-09-10T19:05:58Z",
       "source": "telegram",
       "tag": "telegram→routed"
+    },
+    {
+      "id": "tg_-1004364186396_308",
+      "author": "adam",
+      "text": "Bestia , haos nie działa na rozkazy , napraw haosa",
+      "ts": 1789067204000,
+      "at": "2026-09-10T19:06:44Z",
+      "source": "telegram",
+      "tag": "telegram→routed"
     }
   ],
   "tasks": [],
   "bridge": {
-    "lastSyncAt": "2026-09-10T19:06:04Z",
+    "lastSyncAt": "2026-09-10T19:06:44Z",
     "source": "telegram"
   }
 }
