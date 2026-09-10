@@ -7,7 +7,7 @@ Wspólny hub czterech stron na jednym moście:
 3. **Grok Proxy** — komendy `proxy` / `grok`  
 4. **Bestia** — autonomia telefonu, komendy `bestia`
 
-Polski interfejs, dark UI, mobile-first PWA (portrait). Czat grupowy, chipy komend w stylu Telegrama, tablica zadań i panel mostu do grupy Telegram „Most autonomii”.
+Polski interfejs, dark UI, mobile-first PWA/APK (portrait). **Pokój grupowy w aplikacji** (Adam · HAOS · Proxy · Bestia), chipy komend, tablica zadań. Telegram = opcjonalny mirror (zakładka Most).
 
 **Autor:** Adam (GitHub [Haos1980](https://github.com/Haos1980))
 
@@ -26,28 +26,17 @@ python3 -m http.server 8080
 
 Telefon w tej samej sieci Wi‑Fi: `http://IP_KOMPUTERA:8080`
 
-## Funkcje MVP (v1)
+## Funkcje (v1.1 — pokój w aplikacji)
 
-- Czat z 4 awatarami / rolami i statusami obecności (online / away / busy)
-- Pisanie jako Adam; kolory autorów wiadomości
-- Chipy: `bestia …`, `proxy …`, `grok …`, `haos …` (prefiksy routingu)
-- **📋 TG** — kopiuj skomponowaną komendę do schowka (wklej w Telegramie)
-- Tablica zadań: todo / doing / done (localStorage + eksport/import JSON)
-- Panel **Most**: instrukcje + placeholder deep linka do grupy Telegram
-- Sync v1: localStorage (pokój `most-adam`) + BroadcastChannel (wiele kart) + udostępnianie snapshotu; opcjonalny poll `data/room.json` z Pages
-- PWA: `manifest.json`, ikony, service worker, instalowalna
+- Czat grupowy z 4 awatarami / obecnością (online / away / busy)
+- **Wyślij** zostaje w pokoju (nie otwiera Telegrama)
+- Chipy: `bestia …`, `proxy …`, `grok …`, `haos …` — tylko wypełniają / wysyłają in-app
+- Sync: localStorage + poll `data/room.json`; z telefonu publish przez **GitHub PAT** w ☰ (Contents write)
+- Bridge odpowiada na `haos …` **w pokoju** (bez wymogu TG)
+- Zakładka **Most**: opcjonalny mirror Telegram (📋 TG / Wyślij do TG)
+- Tablica zadań + PWA/APK
 
-> Odpowiedzi agentów w czacie są oznaczone **manual / next wave** — nie udajemy żywego bota w v1.
-
-## Następne fale
-
-| Fala | Co |
-|------|----|
-| **2** | Bot Telegram w grupie „Most autonomii” → sync wiadomości / obecności do PWA (polling lub webhook) |
-| **3** | Głębszy bridge Bestia/Proxy (routing komend z telefonu) |
-| **4** | Opcjonalny APK (WebView / TWA) opakowujący tę PWA |
-
-Szczegóły techniczne mostu: [CONNECT.md](./CONNECT.md)
+Szczegóły: [CONNECT.md](./CONNECT.md)
 
 ## Pliki
 
@@ -70,8 +59,8 @@ Debug APK: dist/Most-Autonomii-debug.apk (id pl.haos.mostautonomii).
 Instrukcja instalacji (nieznane zrodla): ANDROID.md.
 Offline: bundlowane lokalne www/. Poll data/room.json wlaczony domyslnie.
 
-## Telegram bridge (v2)
+## Bridge (v1.1)
 
-Long-poll bot: `bridge/bridge.py` (requires `TELEGRAM_BOT_TOKEN`).  
-See [CONNECT.md](CONNECT.md) — Adam must add **@brat_besti_grok_proxy_bot** to group **Most autonomii** and disable BotFather privacy.
+`bridge/bridge.py` — room watcher (HAOS in-app) + opcjonalny long-poll Telegram (`TELEGRAM_BOT_TOKEN`).  
+PAT w aplikacji: ☰ → GitHub token. Szczegóły: [CONNECT.md](CONNECT.md).
 
