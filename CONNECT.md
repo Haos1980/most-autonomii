@@ -1,54 +1,43 @@
-# CONNECT — most Telegram ↔ Most Autonomii
+# CONNECT — pokój w aplikacji + opcjonalny mirror Telegram
 
-## Stan v2 (live bridge)
+## Stan v1.1 (in-app room)
 
-- PWA trzyma czat lokalnie (localStorage) i **co ~4 s** merge’uje `data/room.json` z GitHub Pages.
-- Bridge (`bridge/bridge.py`) long-polluje Telegram Bot API (`getUpdates`), mapuje grupę **Most autonomii**, dopisuje wiadomości do `data/room.json` i pushuje przez `gh api` contents.
-- Kierunek powrotny: PWA „Wyślij do TG” / chipy → schowek + kolejka; `data/outbox.json` → bridge `sendMessage` do grupy.
-- Status: `data/bridge_status.json` (bot, chat_id, last sync).
+- **APK/PWA = grupowy czat w aplikacji** (Adam + HAOS + Bestia + Proxy). Wszyscy widzą te same wiadomości.
+- Wysyłanie (**Wyślij**) zostaje w pokoju — **nie** otwiera Telegrama ani share sheet.
+- Wspólny stan: `data/room.json` na GitHub Pages. PWA **co ~4 s** merge’uje nowe wiadomości.
+- Z telefonu: ustaw w **☰ Ustawienia** fine-grained **GitHub PAT** (Contents: Read and write na `Haos1980/most-autonomii`) — wtedy Wyślij publikuje do `data/room.json` przez Contents API. Token tylko w localStorage.
+- Bez tokenu: wiadomość lokalna + toast „Lokalnie — ustaw GitHub token…”.
+- Bridge (`bridge/bridge.py`) **obserwuje room.json** i na nowe wiadomości Adama z wzmianką `haos` / `/haos` / `@…` dopisuje odpowiedź HAOS **w pokoju** (bez wymogu Telegrama).
+- Telegram = **opcjonalny mirror** (zakładka Most → „Wyślij do TG” / deep link). Bridge nadal może long-pollować grupę **Most autonomii** → room.json.
 
-Token bota: **tylko** `process.env.TELEGRAM_BOT_TOKEN` (lub `bridge/.env` lokalnie). Nigdy nie commitować tokena.
+Token bota: **tylko** `process.env.TELEGRAM_BOT_TOKEN` (lub `bridge/.env` lokalnie). Nigdy nie commitować tokena ani PAT Adama.
 
-## Co Adam musi zrobić w Telegramie
+## GitHub PAT na telefonie (Adam)
 
-1. Dodać bota (**@Brat_Bestii_Haos_bot**) do grupy **Most autonomii** (najlepiej jako admin z odczytem wiadomości).
-2. W BotFather: **/setprivacy → Disable**, żeby bot widział wszystkie wiadomości grupy (nie tylko komendy `/`).
-   - Jeśli privacy nadal **ON**, bot **nie zobaczy** zwykłego `haos …` — tylko `/haos` albo wzmiankę `@Brat_Bestii_Haos_bot …`.
-3. Napisać coś w grupie — bridge wykryje `chat_id` i zacznie sync do PWA.
-4. Odpowiedź HAOS w grupie: teksty zaczynające się od `haos` / `/haos` / `@Brat_Bestii_Haos_bot` (bez względu na wielkość liter).
+1. GitHub → Settings → Developer settings → Fine-grained personal access tokens.
+2. Repo: `Haos1980/most-autonomii`, permission **Contents: Read and write**.
+3. W aplikacji Most Autonomii → ☰ → pole **GitHub token** → Zapisz.
+4. Wyślij wiadomość — toast „Wysłano do pokoju (sync GitHub)”.
 
-**Jedno zdanie dla HAOS → Adam:** Dodaj @Brat_Bestii_Haos_bot do grupy „Most autonomii” (admin) i w BotFather wyłącz privacy (`/setprivacy` → Disable), potem napisz cokolwiek w grupie.
+## Co Adam może zrobić w Telegramie (opcjonalnie)
+
+1. Dodać bota (**@Brat_Bestii_Haos_bot**) do grupy **Most autonomii** (admin + odczyt).
+2. BotFather: **/setprivacy → Disable**.
+3. Wiadomości z grupy trafią do pokoju przez bridge; odpowiedzi HAOS z TG też są mirrorowane do room.json.
 
 ## Uruchomienie bridge (HAOS / box)
 
 ```bash
-cd /workspace/most-autonomii
-# TELEGRAM_BOT_TOKEN must be in env (or bridge/.env)
+cd /workspace/projekty-most/most-autonomii
+# TELEGRAM_BOT_TOKEN w env lub bridge/.env (opcjonalnie dla mirror TG)
 nohup python3 bridge/bridge.py >> bridge/bridge.log 2>&1 &
 ```
 
-Logi: `bridge/bridge.log`. Stan: `bridge/state.json` (chat_id, offset).
+Logi: `bridge/bridge.log`. Stan: `bridge/state.json` (`chat_id`, `offset`, `room_seen_ids`).
 
-## Outbox (PWA → Telegram)
+## Outbox (opcjonalnie: pokój → Telegram)
 
-Plik `data/outbox.json`:
-
-```json
-{
-  "pending": [
-    { "id": "m_…", "author": "adam", "text": "bestia status", "ts": 0 }
-  ],
-  "updatedAt": "…"
-}
-```
-
-Bridge wysyła `pending` do grupy i czyści kolejkę. Z telefonu Adama Pages nie przyjmuje POST — użyj schowka albo poproś HAOS o push outbox przez `gh api`.
-
-## Deep link grupy
-
-1. W Telegramie otwórz grupę **Most autonomii**.
-2. Skopiuj link (`https://t.me/+…` lub `https://t.me/c/…`).
-3. PWA → ☰ → Deep link Telegram → Zapisz.
+Plik `data/outbox.json` — bridge wysyła `pending` do grupy. Z zakładki Most: „Wyślij do TG”.
 
 ## Aktualizacja plików przez gh api
 
@@ -61,11 +50,6 @@ gh api --method PUT repos/Haos1980/most-autonomii/contents/data/room.json \
   -f sha="$SHA"
 ```
 
-## Fala 3+
-
-- Webhook zamiast long-poll (Cloudflare Worker).
-- Zapis outbox z telefonu bez pośrednika (mini-app / edge).
-
 ## Konflikt getUpdates (409)
 
-Bridge używa **dedykowanego** bota `@Brat_Bestii_Haos_bot` (osobny token) — nie koliduje z `@brat_besti_grok_proxy_bot` / Grok Proxy. Telegram pozwala tylko na **jeden** aktywny `getUpdates` **na bota**. Jeśli ten bridge loguje `409 Conflict`, zabij drugi lokalny `bridge.py` (singleton lock + `bridge.pid`).
+Jeden aktywny `getUpdates` na bota. Bridge: singleton lock `bridge.lock`.
