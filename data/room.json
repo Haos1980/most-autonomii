@@ -1,6 +1,6 @@
 {
   "roomId": "most-adam",
-  "updatedAt": "2026-09-11T02:04:54.072Z",
+  "updatedAt": "2026-09-11T02:04:57Z",
   "note": "Synced by Telegram bridge (HAOS). PWA polls this file.",
   "presence": {
     "adam": "online",
@@ -12,19 +12,19 @@
     {
       "id": "tg_-1004364186396_250",
       "author": "adam",
-      "text": "Haos czeÅÄ",
+      "text": "Haos cześć",
       "ts": 1788886093000,
       "source": "telegram",
-      "tag": "telegramârouted",
+      "tag": "telegram→routed",
       "at": "2026-09-08T16:48:13Z"
     },
     {
       "id": "tg_-1004364186396_252",
       "author": "adam",
-      "text": "bestia SprawdÅº na telefonie Adama aplikacjÄ/APK Most Autonomii (pl.haos.mostautonomii). Nie dziaÅa. ZrÃ³b od A do Z: 1) czy APK jest zainstalowane, 2) odpal i zobacz co siÄ dzieje (crash / biaÅy ekran / bÅÄd sieci), 3) zrÃ³b screeny, 4) sprawdÅº czy otwiera https://haos1980.github.io/most-autonomii/ w Chrome jako porÃ³wnanie, 5) napisz w grupie co dokÅadnie nie dziaÅa i co widaÄ. PeÅna autonomia na telefonie.",
+      "text": "bestia Sprawdź na telefonie Adama aplikację/APK Most Autonomii (pl.haos.mostautonomii). Nie działa. Zrób od A do Z: 1) czy APK jest zainstalowane, 2) odpal i zobacz co się dzieje (crash / biały ekran / błąd sieci), 3) zrób screeny, 4) sprawdź czy otwiera https://haos1980.github.io/most-autonomii/ w Chrome jako porównanie, 5) napisz w grupie co dokładnie nie działa i co widać. Pełna autonomia na telefonie.",
       "ts": 1788887886000,
       "source": "telegram",
-      "tag": "telegramârouted",
+      "tag": "telegram→routed",
       "at": "2026-09-08T17:18:06Z"
     },
     {
@@ -93,7 +93,7 @@
     {
       "id": "tg_-1004364186396_268",
       "author": "adam",
-      "text": "https://t.me/+t1HhCS-aQ1UyZmU8\nHaos czeÅÄ",
+      "text": "https://t.me/+t1HhCS-aQ1UyZmU8\nHaos cześć",
       "ts": 1788977786000,
       "at": "2026-09-09T18:16:26Z",
       "source": "telegram",
@@ -106,7 +106,7 @@
       "ts": 1789059056000,
       "at": "2026-09-10T16:50:56Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_271",
@@ -115,7 +115,7 @@
       "ts": 1789059065000,
       "at": "2026-09-10T16:51:05Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_274",
@@ -124,12 +124,12 @@
       "ts": 1789059073000,
       "at": "2026-09-10T16:51:13Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_6034019716_17",
       "author": "adam",
-      "text": "CzeÅÄ",
+      "text": "Cześć",
       "ts": 1789059481000,
       "at": "2026-09-10T16:58:01Z",
       "source": "telegram",
@@ -138,7 +138,7 @@
     {
       "id": "haos_ack_live_1789059664652",
       "author": "haos",
-      "text": "HAOS: most live â APK powinien zobaczyÄ tÄ wiadomoÅÄ w ~kilka sekund.",
+      "text": "HAOS: most live — APK powinien zobaczyć tę wiadomość w ~kilka sekund.",
       "ts": 1789059664652,
       "at": "2026-09-10T17:01:04Z",
       "source": "bridge",
@@ -147,7 +147,7 @@
     {
       "id": "haos_live_1789059715095",
       "author": "haos",
-      "text": "HAOS: most live â jeÅli to widzisz w APK, sync dziaÅa.",
+      "text": "HAOS: most live — jeśli to widzisz w APK, sync działa.",
       "ts": 1789059715095,
       "at": "2026-09-10T17:01:55Z",
       "source": "bridge",
@@ -165,7 +165,7 @@
     {
       "id": "tg_-1004364186396_280",
       "author": "proxy",
-      "text": "CzeÅÄ! Jasne, dziaÅam. O co chodzi?",
+      "text": "Cześć! Jasne, działam. O co chodzi?",
       "ts": 1789063072000,
       "at": "2026-09-10T17:57:52Z",
       "source": "telegram",
@@ -183,7 +183,7 @@
     {
       "id": "tg_-1004364186396_283",
       "author": "haos",
-      "text": "CzeÅÄ! Jestem gotowy. Co robimy?\n\nâ± 3s | tokens=737",
+      "text": "Cześć! Jestem gotowy. Co robimy?\n\n⏱ 3s | tokens=737",
       "ts": 1789063482000,
       "at": "2026-09-10T18:04:42Z",
       "source": "telegram",
@@ -196,12 +196,12 @@
       "ts": 1789066809000,
       "at": "2026-09-10T19:00:09Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_287",
       "author": "adam",
-      "text": "Popraw bÅÄd w APK most autonomii dalej wiadomoÅci wyÅwietlajÄ siÄ w Telegram",
+      "text": "Popraw błąd w APK most autonomii dalej wiadomości wyświetlają się w Telegram",
       "ts": 1789066852000,
       "at": "2026-09-10T19:00:52Z",
       "source": "telegram",
@@ -210,11 +210,11 @@
     {
       "id": "tg_-1004364186396_288",
       "author": "adam",
-      "text": "Haos \nPopraw bÅÄd w APK most autonomii dalej wiadomoÅci wyÅwietlajÄ siÄ w Telegram",
+      "text": "Haos \nPopraw błąd w APK most autonomii dalej wiadomości wyświetlają się w Telegram",
       "ts": 1789066867000,
       "at": "2026-09-10T19:01:07Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_290",
@@ -223,7 +223,7 @@
       "ts": 1789066925000,
       "at": "2026-09-10T19:02:05Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_292",
@@ -232,7 +232,7 @@
       "ts": 1789066964000,
       "at": "2026-09-10T19:02:44Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_294",
@@ -241,25 +241,25 @@
       "ts": 1789066986000,
       "at": "2026-09-10T19:03:06Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_296",
       "author": "adam",
-      "text": "Proxy chyba haos siÄ zawiesiÅ i nie przyjmuje rozkazie",
+      "text": "Proxy chyba haos się zawiesił i nie przyjmuje rozkazie",
       "ts": 1789067023000,
       "at": "2026-09-10T19:03:43Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_300",
       "author": "adam",
-      "text": "Proxy oÅ¼yw haosa",
+      "text": "Proxy ożyw haosa",
       "ts": 1789067102000,
       "at": "2026-09-10T19:05:02Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_304",
@@ -268,7 +268,7 @@
       "ts": 1789067137000,
       "at": "2026-09-10T19:05:37Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_306",
@@ -277,16 +277,16 @@
       "ts": 1789067158000,
       "at": "2026-09-10T19:05:58Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_308",
       "author": "adam",
-      "text": "Bestia , haos nie dziaÅa na rozkazy , napraw haosa",
+      "text": "Bestia , haos nie działa na rozkazy , napraw haosa",
       "ts": 1789067204000,
       "at": "2026-09-10T19:06:44Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_6034019716_20",
@@ -304,7 +304,7 @@
       "ts": 1789067424000,
       "at": "2026-09-10T19:10:24Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_6034019716_22",
@@ -327,7 +327,7 @@
     {
       "id": "haos-1789068542",
       "author": "haos",
-      "text": "3Ã3 = 9",
+      "text": "3×3 = 9",
       "at": "2026-09-10T19:29:02Z"
     },
     {
@@ -337,7 +337,7 @@
       "ts": 1789068571000,
       "at": "2026-09-10T19:29:31Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_6034019716_28",
@@ -378,7 +378,7 @@
     {
       "id": "tg_-1004364186396_318",
       "author": "proxy",
-      "text": "Nie mam dostÄpu do panelu Grok Bot / HAOS ani do Å¼adnych Webhook URL i key.\n\nNie widzÄ po stronie desktopu Å¼adnych Routines ani danych webhooka â nie dam rady skopiowaÄ ani przekazaÄ.\n\nAdam musi sam wejÅÄ w HAOS â Routines â âHAOS Telegram inboxâ i bezpiecznie (DM do bota / pole w czacie HAOS, nie tu) skopiowaÄ URL + key.",
+      "text": "Nie mam dostępu do panelu Grok Bot / HAOS ani do żadnych Webhook URL i key.\n\nNie widzę po stronie desktopu żadnych Routines ani danych webhooka — nie dam rady skopiować ani przekazać.\n\nAdam musi sam wejść w HAOS → Routines → „HAOS Telegram inbox” i bezpiecznie (DM do bota / pole w czacie HAOS, nie tu) skopiować URL + key.",
       "ts": 1789069761000,
       "at": "2026-09-10T19:49:21Z",
       "source": "telegram",
@@ -391,16 +391,16 @@
       "ts": 1789069857000,
       "at": "2026-09-10T19:50:57Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_322",
       "author": "adam",
-      "text": "Bestia  HAOS potrzebuje webhook URL + key z panelu Grok Bot (agent HAOS â Routines â âHAOS Telegram inboxâ â Webhook URL i Webhook key). Na telefonie Adama: otwÃ³rz Grok Bot / HAOS, skopiuj oba. NIE wklejaj do grupy publicznej â wyÅlij HAOS botowi na DM (@Brat_Bestii_Haos_bot) albo wrzuÄ Adamowi do bezpiecznego pola w czacie HAOS. Cel: odpowiedzi TG ~1s zamiast 5 min. widzisz panel HAOS â Routines â HAOS Telegram inbox â skopiuj Webhook URL + key",
+      "text": "Bestia  HAOS potrzebuje webhook URL + key z panelu Grok Bot (agent HAOS → Routines → „HAOS Telegram inbox” → Webhook URL i Webhook key). Na telefonie Adama: otwórz Grok Bot / HAOS, skopiuj oba. NIE wklejaj do grupy publicznej — wyślij HAOS botowi na DM (@Brat_Bestii_Haos_bot) albo wrzuć Adamowi do bezpiecznego pola w czacie HAOS. Cel: odpowiedzi TG ~1s zamiast 5 min. widzisz panel HAOS → Routines → HAOS Telegram inbox → skopiuj Webhook URL + key",
       "ts": 1789069918000,
       "at": "2026-09-10T19:51:58Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_6034019716_36",
@@ -414,7 +414,7 @@
     {
       "id": "tg_6034019716_38",
       "author": "haos",
-      "text": "CzeÅÄ, tu HAOS. Napisz pytanie albo komendÄ â odpowiem krÃ³tko. W grupie woÅaj mnie sÅowem haos.",
+      "text": "Cześć, tu HAOS. Napisz pytanie albo komendę — odpowiem krótko. W grupie wołaj mnie słowem haos.",
       "ts": 1789071735681,
       "at": "2026-09-10T20:22:15Z",
       "source": "bridge",
@@ -432,7 +432,7 @@
     {
       "id": "tg_6034019716_40",
       "author": "haos",
-      "text": "Ustawienia Most Autonomii: pokÃ³j most-adam, bot @Brat_Bestii_Haos_bot. Aplikacja: https://haos1980.github.io/most-autonomii/",
+      "text": "Ustawienia Most Autonomii: pokój most-adam, bot @Brat_Bestii_Haos_bot. Aplikacja: https://haos1980.github.io/most-autonomii/",
       "ts": 1789071736831,
       "at": "2026-09-10T20:22:16Z",
       "source": "bridge",
@@ -441,7 +441,7 @@
     {
       "id": "tg_6034019716_41",
       "author": "haos",
-      "text": "Tu HAOS, sÅucham. Co robimy?",
+      "text": "Tu HAOS, słucham. Co robimy?",
       "ts": 1789071737388,
       "at": "2026-09-10T20:22:17Z",
       "source": "bridge",
@@ -450,7 +450,7 @@
     {
       "id": "tg_6034019716_42",
       "author": "haos",
-      "text": "4Ã4 = 16.",
+      "text": "4×4 = 16.",
       "ts": 1789071737935,
       "at": "2026-09-10T20:22:17Z",
       "source": "bridge",
@@ -481,7 +481,7 @@
       "ts": 1789072193000,
       "at": "2026-09-10T20:29:53Z",
       "source": "telegram",
-      "tag": "telegramârouted"
+      "tag": "telegram→routed"
     },
     {
       "id": "tg_-1004364186396_329",
@@ -495,27 +495,25 @@
     {
       "id": "tg_-1004364186396_330",
       "author": "haos",
-      "text": "CzeÅÄ! Gotowy do roboty. Co robimy?\n\nâ± 2s | tokens=717",
+      "text": "Cześć! Gotowy do roboty. Co robimy?\n\n⏱ 2s | tokens=717",
       "ts": 1789092225000,
       "at": "2026-09-11T02:03:45Z",
       "source": "telegram",
       "tag": "telegram-bot"
     },
     {
-      "id": "m_mddgvejtmtwbcwdr",
-      "author": "adam",
-      "text": "proxy  cześć",
-      "ts": 1789092293103,
-      "at": "2026-09-11T02:04:53.103Z",
-      "source": "app",
-      "tag": "→ proxy",
-      "target": "proxy",
-      "to": "proxy"
+      "id": "tg_-1004364186396_332",
+      "author": "proxy",
+      "text": "Cześć! Jestem Grok Proxy. Co robimy?",
+      "ts": 1789092297000,
+      "at": "2026-09-11T02:04:57Z",
+      "source": "telegram",
+      "tag": "telegram"
     }
   ],
   "tasks": [],
   "bridge": {
-    "lastSyncAt": "2026-09-11T02:04:54.072Z",
+    "lastSyncAt": "2026-09-11T02:04:57Z",
     "source": "telegram"
   }
 }
