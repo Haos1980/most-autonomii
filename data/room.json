@@ -1,6 +1,6 @@
 {
   "roomId": "most-adam",
-  "updatedAt": "2026-09-21T17:44:58Z",
+  "updatedAt": "2026-09-21T17:45:05Z",
   "note": "Synced by Telegram bridge (HAOS). PWA polls this file.",
   "presence": {
     "adam": "online",
@@ -1454,11 +1454,20 @@
       "at": "2026-09-21T17:44:58Z",
       "source": "bridge",
       "tag": "haos-thinking"
+    },
+    {
+      "id": "tg_6034019716_127",
+      "author": "haos",
+      "text": "HAOS: chwila — odpowiadam naprawdę (nie stub).",
+      "ts": 1790012705049,
+      "at": "2026-09-21T17:45:05Z",
+      "source": "bridge",
+      "tag": "haos-thinking"
     }
   ],
   "tasks": [],
   "bridge": {
-    "lastSyncAt": "2026-09-21T17:44:58Z",
+    "lastSyncAt": "2026-09-21T17:45:05Z",
     "source": "telegram"
   }
 }
